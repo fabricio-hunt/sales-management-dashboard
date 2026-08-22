@@ -40,7 +40,7 @@ export function OverviewChart({ data }: OverviewChartProps) {
           tickFormatter={(value) => `R$${(value / 1000).toFixed(0)}k`}
         />
         <Tooltip 
-          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Faturamento']}
+          formatter={(value: any) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Faturamento']}
           cursor={{fill: '#f1f5f9'}}
         />
         <Bar

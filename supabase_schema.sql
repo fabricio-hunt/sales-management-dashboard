@@ -1,41 +1,67 @@
--- Script de Criação das Tabelas (Rode isso no SQL Editor do Supabase)
+-- Script de Criação das Tabelas Normalizadas (Rode isso no SQL Editor do Supabase)
 
--- 1. Tabela Principal de Pedidos
-CREATE TABLE IF NOT EXISTS public.pedidos (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  data_documento TIMESTAMP WITH TIME ZONE,
-  nota_fiscal TEXT,
-  cliente_nome TEXT,
-  cliente_cnpj TEXT,
-  municipio TEXT,
-  uf TEXT,
-  representante TEXT,
-  produto_nome TEXT,
-  fornecedor_nome TEXT,
-  valor_venda_liquida NUMERIC(10,2),
-  valor_compra NUMERIC(10,2),
-  qtde NUMERIC(10,2),
-  desconto NUMERIC(10,2),
+-- Limpeza de tabelas antigas se existirem
+DROP TABLE IF EXISTS public.vendas CASCADE;
+DROP TABLE IF EXISTS public.produtos CASCADE;
+DROP TABLE IF EXISTS public.clientes CASCADE;
+DROP TABLE IF EXISTS public.representantes CASCADE;
+DROP TABLE IF EXISTS public.pedidos CASCADE;
+DROP TABLE IF EXISTS public.evolucao_clientes CASCADE;
+
+-- 1. Tabela de Representantes
+CREATE TABLE public.representantes (
+  id TEXT PRIMARY KEY, -- Ex: "308"
+  nome TEXT NOT NULL,  -- Ex: "REPRESENTANTE 308"
+  supervisor TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 2. Tabela de Evolução de Clientes (Positivação)
-CREATE TABLE IF NOT EXISTS public.evolucao_clientes (
+-- 2. Tabela de Clientes
+CREATE TABLE public.clientes (
+  id TEXT PRIMARY KEY, -- Cod.Pessoa
+  razao_social TEXT,
+  fantasia TEXT,
+  cnpj TEXT,
+  municipio TEXT,
+  uf TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 3. Tabela de Produtos
+CREATE TABLE public.produtos (
+  id TEXT PRIMARY KEY, -- Código Produto
+  descricao TEXT,
+  fornecedor_nome TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 4. Tabela Fato de Vendas
+CREATE TABLE public.vendas (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  cliente_cnpj TEXT,
-  representante TEXT,
-  status_ativo BOOLEAN,
-  data_ultima_compra TIMESTAMP WITH TIME ZONE,
+  pedido_nr TEXT,
+  data_venda DATE NOT NULL,
+  cliente_id TEXT REFERENCES public.clientes(id),
+  representante_id TEXT REFERENCES public.representantes(id),
+  produto_id TEXT REFERENCES public.produtos(id),
+  venda_liq NUMERIC(15,2),
+  devolucao NUMERIC(15,2),
+  desconto NUMERIC(15,2),
+  venda_bruta NUMERIC(15,2),
+  qtde NUMERIC(15,4),
+  peso_bruto NUMERIC(15,4),
+  peso_liq NUMERIC(15,4),
+  is_positivacao INTEGER DEFAULT 1, -- Equivalente à coluna POSIT
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- Habilitar RLS (Segurança) mas deixaremos aberto para o Admin por enquanto
-ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.evolucao_clientes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.representantes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clientes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.produtos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vendas ENABLE ROW LEVEL SECURITY;
 
--- Política para permitir Inserções e Leituras públicas temporárias (só para testes, pode remover depois)
-CREATE POLICY "Permitir leitura anonima" ON public.pedidos FOR SELECT USING (true);
-CREATE POLICY "Permitir insercao anonima" ON public.pedidos FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Permitir leitura anonima evo" ON public.evolucao_clientes FOR SELECT USING (true);
-CREATE POLICY "Permitir insercao anonima evo" ON public.evolucao_clientes FOR INSERT WITH CHECK (true);
+-- Políticas para permitir Leituras e Inserções públicas temporárias (só para testes, remover depois)
+CREATE POLICY "Permitir full access reps" ON public.representantes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir full access clientes" ON public.clientes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir full access prod" ON public.produtos FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir full access vendas" ON public.vendas FOR ALL USING (true) WITH CHECK (true);
