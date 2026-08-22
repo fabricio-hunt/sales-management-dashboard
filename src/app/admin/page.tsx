@@ -79,18 +79,18 @@ export default function AdminPage() {
 
             return {
               data_documento: dataDocumento ? dataDocumento.toISOString() : null,
-              nota_fiscal: row["Número NFE"]?.toString() || null,
-              cliente_nome: row["Razão Social Cliente"] || null,
-              cliente_cnpj: row["CNPJ Cliente"]?.toString() || null,
+              nota_fiscal: row["Nota Fiscal"]?.toString() || null,
+              cliente_nome: row["Cliente"] || null,
+              cliente_cnpj: row["CPF\\CNPJ"]?.toString() || null,
               municipio: row["Município"] || null,
-              uf: row["Estado"] || null,
-              representante: row["Vendedor"] || row["Preposto"] || null,
-              produto_nome: row["Descrição Produto"] || null,
-              fornecedor_nome: row["Fornecedor Origem"] || null,
-              valor_venda_liquida: parseFloat(row["Valor Venda Líquida"]) || 0,
-              valor_compra: parseFloat(row["Valor Compra Lote"]) || 0,
-              qtde: parseFloat(row["Qtde"]) || 0,
-              desconto: parseFloat(row["Valor Desconto"]) || 0
+              uf: row["UF"] || null,
+              representante: row["Representante"] || null,
+              produto_nome: row["Produto"] || null,
+              fornecedor_nome: row["Fornecedor"] || null,
+              valor_venda_liquida: parseFloat(row["VDA LIQ"] ?? row["Venda Liq."] ?? row["TT VDA LIQ"]) || 0,
+              valor_compra: parseFloat(row["Compra"]) || 0,
+              qtde: parseFloat(row["Qtde Saída"] ?? row["PEDIDOS"]) || 0,
+              desconto: parseFloat(row["Desconto"] ?? row["Desconto Promocional"]) || 0
             }
           })
           
