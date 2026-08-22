@@ -13,11 +13,39 @@ async function runImport() {
   const workbook = xlsx.read(buffer, { cellDates: true, type: 'buffer' });
   
   const sheetName = workbook.SheetNames.find(s => s.trim().toUpperCase() === "DD PEDIDOS") || workbook.SheetNames[0];
+  console.log("Using sheet:", sheetName);
   const worksheet = workbook.Sheets[sheetName];
-  const rawJson = xlsx.utils.sheet_to_json(worksheet);
 
-  console.log(`Found ${rawJson.length} records. Mapping data...`);
+  // The sheet has a title row + blank row before the real headers.
+  // We need to find the actual header row containing "Seq", "Data Documento", etc.
+  // xlsx range format: { s: { r: startRow, c: startCol }, e: { r: endRow, c: endCol } }
+  const range = xlsx.utils.decode_range(worksheet['!ref']);
   
+  // Find the header row by scanning for "Seq" in column A
+  let headerRow = 0;
+  for (let r = range.s.r; r <= Math.min(range.s.r + 10, range.e.r); r++) {
+    const cell = worksheet[xlsx.utils.encode_cell({ r, c: 0 })];
+    if (cell && String(cell.v).trim() === 'Seq') {
+      headerRow = r;
+      break;
+    }
+  }
+  console.log("Header row index:", headerRow);
+
+  // Set the range to start from the header row
+  const newRange = { ...range, s: { ...range.s, r: headerRow } };
+  worksheet['!ref'] = xlsx.utils.encode_range(newRange);
+
+  const rawJson = xlsx.utils.sheet_to_json(worksheet);
+  console.log(`Found ${rawJson.length} records.`);
+
+  // Debug: print first row keys
+  if (rawJson.length > 0) {
+    console.log("First row keys:", Object.keys(rawJson[0]));
+    console.log("First row sample:", JSON.stringify(rawJson[0], null, 2));
+  }
+
+  // Map to database schema
   const mappedData = rawJson.map(row => {
     let dataDocumento = null;
     if (row["Data Documento"]) {
@@ -37,14 +65,17 @@ async function runImport() {
       representante: row["Representante"] || null,
       produto_nome: row["Produto"] || null,
       fornecedor_nome: row["Fornecedor"] || null,
-      valor_venda_liquida: parseFloat(row["VDA LIQ"] ?? row["Venda Liq."] ?? row["TT VDA LIQ"]) || 0,
+      valor_venda_liquida: parseFloat(row["VDA LIQ"]) || 0,
       valor_compra: parseFloat(row["Compra"]) || 0,
-      qtde: parseFloat(row["Qtde Saída"] ?? row["PEDIDOS"]) || 0,
-      desconto: parseFloat(row["Desconto"] ?? row["Desconto Promocional"]) || 0
+      qtde: parseFloat(row["Qtde Saída"]) || 0,
+      desconto: parseFloat(row["Desconto"]) || 0
     };
   });
 
-  console.log("Deleting old empty records...");
+  // Debug: print first mapped row
+  console.log("\nFirst mapped row:", JSON.stringify(mappedData[0], null, 2));
+
+  console.log("\nDeleting old records...");
   await supabase.from("pedidos").delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
   console.log("Inserting new records...");

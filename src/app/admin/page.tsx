@@ -63,6 +63,19 @@ export default function AdminPage() {
           // Ensure "DD PEDIDOS" exists
           const sheetName = workbook.SheetNames.find(s => s.trim().toUpperCase() === "DD PEDIDOS") || workbook.SheetNames[0]
           const worksheet = workbook.Sheets[sheetName]
+
+          // The sheet may have title/blank rows before the real header.
+          // Find the row containing "Seq" in column A to use as the header.
+          const range = xlsx.utils.decode_range(worksheet['!ref'] || 'A1')
+          for (let r = range.s.r; r <= Math.min(range.s.r + 10, range.e.r); r++) {
+            const cell = worksheet[xlsx.utils.encode_cell({ r, c: 0 })]
+            if (cell && String(cell.v).trim() === 'Seq') {
+              range.s.r = r
+              break
+            }
+          }
+          worksheet['!ref'] = xlsx.utils.encode_range(range)
+
           const rawJson = xlsx.utils.sheet_to_json<any>(worksheet)
           
           setProgress(60)
