@@ -7,6 +7,7 @@ import {
   Upload,
   BarChart3,
   Settings,
+  BookOpen,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -16,6 +17,7 @@ export function Sidebar() {
     { href: "/", label: "Visão Geral", icon: LayoutDashboard },
     { href: "/comercial", label: "Comercial", icon: Users },
     { href: "/produtos", label: "Produtos", icon: BarChart3 },
+    { href: "/docs", label: "Documentação", icon: BookOpen },
     { href: "/admin", label: "Atualizar Dados", icon: Upload },
     { href: "/configuracoes", label: "Configurações", icon: Settings },
   ];
