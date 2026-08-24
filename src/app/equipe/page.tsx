@@ -301,16 +301,16 @@ export default async function EquipePage() {
             <div className="text-2xl font-black text-white tracking-tight">{PERIODO.regiao}</div>
             <div className="text-slate-400 text-sm mt-1">Período: {PERIODO.label}</div>
           </div>
-          <div className="flex divide-x divide-slate-700 flex-wrap">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-slate-700 border-t md:border-t-0 border-slate-700 flex-1">
             {[
               { label: "Dias Úteis",    value: PERIODO.diasUteis, color: "text-white" },
               { label: "Dias Faturado", value: diasFaturado,      color: "text-blue-400" },
               { label: "Dias Restam",   value: diasRestam,        color: "text-amber-400" },
               { label: "% Ideal",       value: fmtPct(pctIdeal),  color: "text-emerald-400" },
             ].map(({ label, value, color }) => (
-              <div key={label} className="px-6 py-5 text-center min-w-[110px]">
+              <div key={label} className="px-4 py-4 md:px-6 md:py-5 text-center flex flex-col justify-center">
                 <p className="text-slate-400 uppercase font-semibold text-[10px] tracking-wider mb-1">{label}</p>
-                <p className={`text-3xl font-black ${color}`}>{value}</p>
+                <p className={`text-2xl md:text-3xl font-black ${color}`}>{value}</p>
               </div>
             ))}
           </div>
@@ -325,8 +325,8 @@ export default async function EquipePage() {
           <div className="bg-slate-800 px-4 py-2">
             <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Positivação de Clientes</p>
           </div>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
                   { label: "Cadastro Total",   value: fmtNum0(CADASTRO_TOTAL),         color: "text-slate-900",  bg: "" },
@@ -351,8 +351,8 @@ export default async function EquipePage() {
           <div className="bg-slate-800 px-4 py-2">
             <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Resultado Financeiro</p>
           </div>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
                   { label: "Obj. Financeiro",     value: fmtCur(META_FINANCEIRA_TOTAL),  color: "text-amber-600",  bg: "bg-amber-50" },

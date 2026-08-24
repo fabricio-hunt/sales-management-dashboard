@@ -69,7 +69,7 @@ export default function DashboardHub() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Coluna 1: Dados Analíticos */}
         <div className="space-y-4">
