@@ -14,6 +14,7 @@ import {
   Trophy,
   DollarSign,
   Package,
+  LineChart,
   Menu,
   X,
 } from "lucide-react";
