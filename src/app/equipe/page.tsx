@@ -135,6 +135,7 @@ const NOME_BANCO_PARA_PLANILHA: Record<string, string> = {
 const CADASTRO_TOTAL = 1288;
 const BASE_ATIVA = 1214;
 const OBJ_POSITIVACAO = 605;
+const REALIZADO_POSITIVACAO_MANUAL = 533; // From DD POSITIVACAO sheet
 const META_FINANCEIRA_TOTAL = 737940.06;
 
 async function fetchAllVendas() {
@@ -219,7 +220,7 @@ export default async function EquipePage() {
   const diasRestam = Math.max(0, PERIODO.diasUteis - diasFaturado);
   const pctIdeal = PERIODO.diasUteis > 0 ? (diasFaturado / PERIODO.diasUteis) * 100 : 0;
 
-  const positivadosCount = clientesPositivadosSet.size;
+  const positivadosCount = REALIZADO_POSITIVACAO_MANUAL; // Usando o número fixo (533) da aba DD POSITIVACAO do Excel
   const faltaPositivar = Math.max(0, OBJ_POSITIVACAO - positivadosCount);
   const pctPositivacaoRealizado = OBJ_POSITIVACAO > 0 ? (positivadosCount / OBJ_POSITIVACAO) * 100 : 0;
   const pctFinanceiroRealizado = META_FINANCEIRA_TOTAL > 0 ? (receitaTotal / META_FINANCEIRA_TOTAL) * 100 : 0;
