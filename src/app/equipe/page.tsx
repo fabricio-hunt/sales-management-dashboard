@@ -46,55 +46,89 @@ const METAS_FORNECEDOR: Record<
   "Marata":                 { metaCx: 1500, metaDiaCx: 63.17,  metaFin: 78747.85,  desafioDist: 256 },
 };
 
-// Mapeamento: nomes do banco → nomes da planilha
-// Os nomes no banco podem estar em maiúsculas ou com variações
+// Mapeamento COMPLETO: razão social do banco → nome fantasia da planilha
+// Baseado na inspeção dos produtos por fornecedor na planilha DD PEDIDOS
 const NOME_BANCO_PARA_PLANILHA: Record<string, string> = {
-  // Chef Clay família - podem estar como variações
-  "CHEF CLAY":                       "Chef Clay",
-  "CHEF CLAY GRANOLA":               "Chef Clay Granola",
-  "CHEF CLAY MOLHOS":                "Chef Clay Molhos",
-  "TAPIOCA CHEF CLAY":               "Tapioca Chef Clay",
-  "CHEF CLAY LEITE DE COCO":         "Chef Clay Leite de Coco",
-  "CHEF CLAY / MACRO":               "Chef Clay",
-  // Casaredo grupo
-  "CASAREDO":                        "Casaredo",
-  "COCO & CIA":                      "Coco & Cia",
-  "RICLAN":                          "Riclan",
-  "RICLAN SA":                       "Riclan",
-  "ZD ALIMENTOS":                    "ZD Alimentos",
-  "ZD ALIMENTOS S.A":                "ZD Alimentos",
-  "PORTAO DE CAMBUI":                "Portao de Cambui",
+  // Chef Clay - fabricante é ALGO MAIS TEMPEROS EIRELI (molhos, temperos, sal de parrilla)
+  "ALGO MAIS TEMPEROS EIRELI":            "Chef Clay Molhos",
+  // Chef Clay Leite de Coco - ECOVILLE DO BRASIL (geleia chef clay, leite de coco)
+  "ECOVILLE  DO  BRASIL  LIMITADA":       "Chef Clay Leite de Coco",
+  "ECOVILLE DO BRASIL LIMITADA":          "Chef Clay Leite de Coco",
+  // Chef Clay Granola - não identificado, mas Tapioca é MACAU ALIMENTOS
+  "MACAU ALIMENTOS LTDA":                 "Tapioca Chef Clay",
+  // Chef Clay - GN DISTRIBUIDORA (ketchup, molho barbecue chef clay)
+  "GN DISTRIBUIDORA DE ALIMENTOS LTDA":  "Chef Clay",
+  // Casaredo / Danilla - NUTRISUL (biscoito casaredo, wafer my bit)
+  "NUTRISUL S.A. PRODUTOS ALIMENTICIOS": "Casaredo",
+  // Casaredo - DOCE SABOR (dadinho, paçoca)
+  "DOCE SABOR INDUSTRIA E COMERCIO DE PRODU": "Casaredo",
+  // Coco & Cia - IND. MENDONCA BARRETO (coco flocado, ralado)
+  "IND. & COM. MENDONCA BARRETO LTDA":   "Coco & Cia",
+  // Riclan
+  "RICLAN":                              "Riclan",
+  "RICLAN SA":                           "Riclan",
+  // ZD Alimentos
+  "ZD ALIMENTOS S.A":                    "ZD Alimentos",
+  "ZD ALIMENTOS":                        "ZD Alimentos",
+  // Portão de Cambuí
   "PORTAO DE CAMBUI DOCES E LATICINIOS LTDA": "Portao de Cambui",
-  "EBICEN":                          "Ebicen",
-  // Outros
-  "MONTEVERGINE":                    "Montevergine",
-  "NEUGEBAUER":                      "Neugebauer",
-  "NEUGEBAUER ALIMENTOS S/A":        "Neugebauer",
-  "DGOIAS":                          "Dgoias",
-  "DGOIAS IND":                      "Dgoias",
-  "DGOIAS INDUSTRIA DE ALIMENTOS LTDA": "Dgoias",
-  "BRETZKE":                         "Bretzke",
-  "BRICOFLEX":                       "Bricoflex",
+  "PORTAO DE CAMBUI":                    "Portao de Cambui",
+  // Ebicen - GLICO ALIMENTOS (snacks Glico, Ebicen)
+  "GLICO ALIMENTOS LT":                  "Ebicen",
+  "EBICEN":                              "Ebicen",
+  // Montevergine - DISTRIBUIDORA DE PRODUTOS ALIMENTICIOS M (torrone)
+  "DISTRIBUIDORA DE PRODUTOS ALIMENTICIOS M": "Montevergine",
+  "MONTEVERGINE":                        "Montevergine",
+  // Neugebauer
+  "NEUGEBAUER ALIMENTOS S/A":            "Neugebauer",
+  "NEUGEBAUER":                          "Neugebauer",
+  // Dgoias
+  "DGOIAS INDUSTRIA DE ALIMENTOS LTDA":  "Dgoias",
+  "DGOIAS IND":                          "Dgoias",
+  "DGOIAS":                              "Dgoias",
+  // Bricoflex
   "BRICOFLEX, IMPORTACAO E EXPORTACAO, COME": "Bricoflex",
-  "VIBE":                            "V!be",
-  "V!BE":                            "V!be",
-  "BLUE BEVERAGES ENVASADORA LTDA":  "V!be",
-  "DELICIA NORDESTINA":              "Delicia Nordestina",
-  "TOSHIBA":                         "Toshiba",
-  "DANILLA":                         "Danilla",
-  "DIZIOLI":                         "Dizioli",
-  "DISTRIBUIDORA DENOR LTDA":        "Dizioli",
-  "MARUCHAN":                        "Maruchan",
+  "BRICOFLEX":                           "Bricoflex",
+  // V!be - BLUE BEVERAGES (energético, refrigerante)
+  "BLUE BEVERAGES ENVASADORA LTDA":      "V!be",
+  "VIBE":                                "V!be",
+  "V!BE":                                "V!be",
+  // Delicia Nordestina - DISTRIBUIDORA DENOR LTDA (bolacha)
+  "DISTRIBUIDORA DENOR LTDA":            "Delicia Nordestina",
+  "DELICIA NORDESTINA":                  "Delicia Nordestina",
+  // Toshiba - HAYAMAX (pilhas Toshiba)
+  "HAYAMAX DISTRIBUIDORA DE PRODUTOS ELETRO": "Toshiba",
+  "TOSHIBA":                             "Toshiba",
+  // Danilla - IND E COM OLIVEIRA (doce de leite Oliveira)
+  "IND E COM OLIVEIRA LT":               "Danilla",
+  "DANILLA":                             "Danilla",
+  // Dizioli - BLUE ALIMENTOS EIRELI (chocolate em pó, granulado)
+  "BLUE ALIMENTOS EIRELI":               "Dizioli",
+  "DIZIOLI":                             "Dizioli",
+  // Maruchan
   "MARUCHAN DO BRASIL, IMPORTACAO, EXPORTAC": "Maruchan",
-  "KOBBER":                          "Kobber",
-  "KOBBER ALIMENTOS LT":             "Kobber",
-  "FAMPAR":                          "Fampar",
-  "SALCIQUE":                        "Salcique",
-  "SALEIQUE":                        "Salcique",
-  "MARATA":                          "Marata",
-  "MARATA SUCOS DO NORDESTE LTDA":   "Marata",
-  "MARATA - EXCLUSIVA":              "Marata",
-  "MARATA VAREJO":                   "Marata",
+  "MARUCHAN":                            "Maruchan",
+  // Kobber
+  "KOBBER ALIMENTOS LT":                 "Kobber",
+  "KOBBER":                              "Kobber",
+  // Fampar - LINGUA DOCE LTDA (doces aurora, paçoca)
+  "LINGUA DOCE LTDA":                    "Fampar",
+  "FAMPAR":                              "Fampar",
+  // Salcique - JOAO SEVERINO CACIQUE (salgadinhos salcique)
+  "JOAO SEVERINO CACIQUE":               "Salcique",
+  "SALCIQUE":                            "Salcique",
+  "SALEIQUE":                            "Salcique",
+  // Marata
+  "MARATA SUCOS DO NORDESTE LTDA":       "Marata",
+  "MARATA":                              "Marata",
+  "MARATA - EXCLUSIVA":                  "Marata",
+  "MARATA VAREJO":                       "Marata",
+  // Bretzke (não identificado nos produtos, manter como está)
+  "BRETZKE":                             "Bretzke",
+  // Audaz Foods / Good Days Brasil - sem meta definida, agrupa como Outros
+  "AUDAZ FOODS LTDA":                    "Outros",
+  "GOOD  DAYS  BRASIL  LTDA":            "Outros",
+  "GOOD DAYS BRASIL LTDA":               "Outros",
 };
 
 // Valores reais da planilha (header)
@@ -188,11 +222,8 @@ export default async function EquipePage() {
   const faltaFinanceiro = Math.max(0, META_FINANCEIRA_TOTAL - receitaTotal);
   const necessidadeVendaDia = diasRestam > 0 ? faltaFinanceiro / diasRestam : 0;
 
-  // Montar tabela: priorizar fornecedores que têm metas definidas
-  const allFornecedorNames = new Set([
-    ...Object.keys(METAS_FORNECEDOR),
-    ...Object.keys(fornecedoresMap),
-  ]);
+  // Montar tabela: exibir APENAS fornecedores definidos na planilha Excel (metas)
+  const allFornecedorNames = new Set(Object.keys(METAS_FORNECEDOR));
 
   const tableData = Array.from(allFornecedorNames).map((nome) => {
     const dados = fornecedoresMap[nome] || { realCx: 0, realFin: 0, clientes: new Set(), vendaLiqTotal: 0, qtdeTotal: 0 };
@@ -219,12 +250,7 @@ export default async function EquipePage() {
     };
   });
 
-  // Sort: fornecedores com meta financeira primeiro (por metaFin desc), depois por realFin
-  tableData.sort((a, b) => {
-    if (a.metaFin > 0 && b.metaFin === 0) return -1;
-    if (a.metaFin === 0 && b.metaFin > 0) return 1;
-    return b.realFin - a.realFin;
-  });
+  // Mantém a ordem exata da planilha (definida em METAS_FORNECEDOR)
 
   // Totais
   const totalMetaFin = tableData.reduce((s, r) => s + r.metaFin, 0);
@@ -391,8 +417,6 @@ export default async function EquipePage() {
                 </tr>
               )}
               {tableData.map((row, idx) => {
-                // Esconder linhas com zero em tudo
-                if (row.realFin === 0 && row.metaFin === 0 && row.realCx === 0) return null;
 
                 const isCxBad = row.metaCx > 0 && row.pctCx < pctIdeal;
                 const isFinBad = row.metaFin > 0 && row.pctFin < pctIdeal;
