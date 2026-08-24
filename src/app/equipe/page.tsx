@@ -16,34 +16,34 @@ const PERIODO = {
 // Chave: nome do fornecedor exato como aparece na planilha / banco
 const METAS_FORNECEDOR: Record<
   string,
-  { metaCx: number; metaDiaCx: number; metaFin: number; desafioDist: number }
+  { metaCx: number; metaDiaCx: number; metaFin: number; desafioDist: number; precoMedioPlanilha: number }
 > = {
-  "Chef Clay":              { metaCx: 365,  metaDiaCx: 16.78,  metaFin: 26490.95,  desafioDist: 192 },
-  "Chef Clay Granola":      { metaCx: 5,    metaDiaCx: 0.625,  metaFin: 433.89,    desafioDist: 56  },
-  "Chef Clay Molhos":       { metaCx: 220,  metaDiaCx: 14.5,   metaFin: 14227.19,  desafioDist: 118 },
-  "Tapioca Chef Clay":      { metaCx: 60,   metaDiaCx: 5.875,  metaFin: 5901.09,   desafioDist: 40  },
-  "Chef Clay Leite de Coco":{ metaCx: 155,  metaDiaCx: 13.81,  metaFin: 8466.66,   desafioDist: 92  },
-  "Casaredo":               { metaCx: 245,  metaDiaCx: 6.625,  metaFin: 18763.16,  desafioDist: 144 },
-  "Coco & Cia":             { metaCx: 355,  metaDiaCx: 31.84,  metaFin: 44628.84,  desafioDist: 108 },
-  "Riclan":                 { metaCx: 1340, metaDiaCx: 28.65,  metaFin: 98502.68,  desafioDist: 370 },
-  "ZD Alimentos":           { metaCx: 315,  metaDiaCx: 15.62,  metaFin: 37165.97,  desafioDist: 266 },
-  "Portao de Cambui":       { metaCx: 135,  metaDiaCx: 7.08,   metaFin: 74924.82,  desafioDist: 310 },
-  "Ebicen":                 { metaCx: 180,  metaDiaCx: 5.84,   metaFin: 21262.77,  desafioDist: 150 },
-  "Montevergine":           { metaCx: 325,  metaDiaCx: 14.93,  metaFin: 25701.53,  desafioDist: 228 },
-  "Neugebauer":             { metaCx: 335,  metaDiaCx: 13.26,  metaFin: 86975.94,  desafioDist: 212 },
-  "Dgoias":                 { metaCx: 100,  metaDiaCx: 8.125,  metaFin: 19203.78,  desafioDist: 72  },
-  "Bretzke":                { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 112 },
-  "Bricoflex":              { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 84  },
-  "V!be":                   { metaCx: 145,  metaDiaCx: 0,      metaFin: 11395.28,  desafioDist: 36  },
-  "Delicia Nordestina":     { metaCx: 310,  metaDiaCx: 28.25,  metaFin: 25977.58,  desafioDist: 42  },
-  "Toshiba":                { metaCx: 20,   metaDiaCx: 1.95,   metaFin: 13853.98,  desafioDist: 76  },
-  "Danilla":                { metaCx: 53,   metaDiaCx: 2.19,   metaFin: 24375.27,  desafioDist: 184 },
-  "Dizioli":                { metaCx: 365,  metaDiaCx: 15.72,  metaFin: 53741.23,  desafioDist: 266 },
-  "Maruchan":               { metaCx: 250,  metaDiaCx: 12.25,  metaFin: 12863.65,  desafioDist: 64  },
-  "Kobber":                 { metaCx: 75,   metaDiaCx: 6.60,   metaFin: 12214.90,  desafioDist: 102 },
-  "Fampar":                 { metaCx: 22,   metaDiaCx: 1.89,   metaFin: 11999.89,  desafioDist: 108 },
-  "Salcique":               { metaCx: 185,  metaDiaCx: 11.5,   metaFin: 10121.16,  desafioDist: 38  },
-  "Marata":                 { metaCx: 1500, metaDiaCx: 63.17,  metaFin: 78747.85,  desafioDist: 256 },
+  "Chef Clay":              { metaCx: 365,  metaDiaCx: 16.78,  metaFin: 26490.95,  desafioDist: 192, precoMedioPlanilha: 76.25 },
+  "Chef Clay Granola":      { metaCx: 5,    metaDiaCx: 0.625,  metaFin: 433.89,    desafioDist: 56,  precoMedioPlanilha: 94.62 },
+  "Chef Clay Molhos":       { metaCx: 220,  metaDiaCx: 14.5,   metaFin: 14227.19,  desafioDist: 118, precoMedioPlanilha: 66.78 },
+  "Tapioca Chef Clay":      { metaCx: 60,   metaDiaCx: 5.875,  metaFin: 5901.09,   desafioDist: 40,  precoMedioPlanilha: 119.70 },
+  "Chef Clay Leite de Coco":{ metaCx: 155,  metaDiaCx: 13.81,  metaFin: 8466.66,   desafioDist: 92,  precoMedioPlanilha: 56.94 },
+  "Casaredo":               { metaCx: 245,  metaDiaCx: 6.625,  metaFin: 18763.16,  desafioDist: 144, precoMedioPlanilha: 79.99 },
+  "Coco & Cia":             { metaCx: 355,  metaDiaCx: 31.84,  metaFin: 44628.84,  desafioDist: 108, precoMedioPlanilha: 135.00 },
+  "Riclan":                 { metaCx: 1340, metaDiaCx: 28.65,  metaFin: 98502.68,  desafioDist: 370, precoMedioPlanilha: 85.00 },
+  "ZD Alimentos":           { metaCx: 315,  metaDiaCx: 15.62,  metaFin: 37165.97,  desafioDist: 266, precoMedioPlanilha: 115.50 },
+  "Portao de Cambui":       { metaCx: 135,  metaDiaCx: 7.08,   metaFin: 74924.82,  desafioDist: 310, precoMedioPlanilha: 582.99 },
+  "Ebicen":                 { metaCx: 180,  metaDiaCx: 5.84,   metaFin: 21262.77,  desafioDist: 150, precoMedioPlanilha: 123.00 },
+  "Montevergine":           { metaCx: 325,  metaDiaCx: 14.93,  metaFin: 25701.53,  desafioDist: 228, precoMedioPlanilha: 88.42 },
+  "Neugebauer":             { metaCx: 335,  metaDiaCx: 13.26,  metaFin: 86975.94,  desafioDist: 212, precoMedioPlanilha: 268.21 },
+  "Dgoias":                 { metaCx: 100,  metaDiaCx: 8.125,  metaFin: 19203.78,  desafioDist: 72,  precoMedioPlanilha: 210.17 },
+  "Bretzke":                { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 112, precoMedioPlanilha: 91.74 },
+  "Bricoflex":              { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 84,  precoMedioPlanilha: 102.24 },
+  "V!be":                   { metaCx: 145,  metaDiaCx: 0,      metaFin: 11395.28,  desafioDist: 36,  precoMedioPlanilha: 0 },
+  "Delicia Nordestina":     { metaCx: 310,  metaDiaCx: 28.25,  metaFin: 25977.58,  desafioDist: 42,  precoMedioPlanilha: 1.00 },
+  "Toshiba":                { metaCx: 20,   metaDiaCx: 1.95,   metaFin: 13853.98,  desafioDist: 76,  precoMedioPlanilha: 793.31 },
+  "Danilla":                { metaCx: 53,   metaDiaCx: 2.19,   metaFin: 24375.27,  desafioDist: 184, precoMedioPlanilha: 466.35 },
+  "Dizioli":                { metaCx: 365,  metaDiaCx: 15.72,  metaFin: 53741.23,  desafioDist: 266, precoMedioPlanilha: 182.68 },
+  "Maruchan":               { metaCx: 250,  metaDiaCx: 12.25,  metaFin: 12863.65,  desafioDist: 64,  precoMedioPlanilha: 55.33 },
+  "Kobber":                 { metaCx: 75,   metaDiaCx: 6.60,   metaFin: 12214.90,  desafioDist: 102, precoMedioPlanilha: 171.22 },
+  "Fampar":                 { metaCx: 22,   metaDiaCx: 1.89,   metaFin: 11999.89,  desafioDist: 108, precoMedioPlanilha: 548.05 },
+  "Salcique":               { metaCx: 185,  metaDiaCx: 11.5,   metaFin: 10121.16,  desafioDist: 38,  precoMedioPlanilha: 60.81 },
+  "Marata":                 { metaCx: 1500, metaDiaCx: 63.17,  metaFin: 78747.85,  desafioDist: 256, precoMedioPlanilha: 61.23 },
 };
 
 // Mapeamento COMPLETO: razão social do banco → nome fantasia da planilha
@@ -250,6 +250,10 @@ export default async function EquipePage() {
     const precoMedio = dados.qtdeTotal > 0 ? dados.vendaLiqTotal / dados.qtdeTotal : 0;
     const pctCx = meta.metaCx > 0 ? (dados.realCx / meta.metaCx) * 100 : 0;
     const pctFin = meta.metaFin > 0 ? (dados.realFin / meta.metaFin) * 100 : 0;
+    
+    // Novo bloco: Financeiro Detalhado conforme planilha (Premiação)
+    const precoMedioPlanilha = meta.precoMedioPlanilha || 0;
+    const metaFinPremiacao = meta.metaCx * precoMedioPlanilha;
 
     return {
       nome,
@@ -263,7 +267,8 @@ export default async function EquipePage() {
       desafioDist: meta.desafioDist,
       realDist,
       faltaDist,
-      precoMedio,
+      precoMedio: precoMedioPlanilha, // Usando o preço médio fixado da planilha
+      metaFinPremiacao, // Meta Financeira = Volume Caixa * Preço Médio
     };
   });
 
@@ -401,9 +406,9 @@ export default async function EquipePage() {
                   Desafio Distribuição Numérica
                 </th>
 
-                {/* Preço médio */}
-                <th colSpan={3} className="px-3 py-1.5 border-b text-center font-bold bg-purple-100 text-purple-900 border-t">
-                  Financeiro Detalhado
+                {/* Preço médio (Premiação) */}
+                <th colSpan={4} className="px-3 py-1.5 border-b text-center font-bold bg-yellow-100 text-yellow-900 border-t">
+                  Premiação
                 </th>
               </tr>
               <tr className="bg-slate-50 text-[10px] text-slate-600 uppercase tracking-wide">
@@ -420,9 +425,10 @@ export default async function EquipePage() {
                 <th className="px-2 py-1.5 border-b border-r text-right">Realizado</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">Falta</th>
 
-                <th className="px-2 py-1.5 border-b border-r text-right">Meta R$</th>
-                <th className="px-2 py-1.5 border-b border-r text-right">Real R$</th>
-                <th className="px-2 py-1.5 border-b text-right">Preço Médio</th>
+                <th className="px-2 py-1.5 border-b border-r text-right">Meta Financeira</th>
+                <th className="px-2 py-1.5 border-b border-r text-right">Realizado</th>
+                <th className="px-2 py-1.5 border-b border-r text-right">Preço Médio</th>
+                <th className="px-2 py-1.5 border-b text-right">Premiação</th>
               </tr>
             </thead>
             <tbody>
@@ -481,15 +487,18 @@ export default async function EquipePage() {
                       {row.desafioDist > 0 ? (row.faltaDist > 0 ? fmtNum0(row.faltaDist) : "✓") : "-"}
                     </td>
 
-                    {/* Financeiro Detalhado */}
-                    <td className="px-2 py-2 border-r text-right font-mono text-purple-600">
-                      {row.metaFin > 0 ? fmtCur(row.metaFin) : "-"}
+                    {/* Premiação Detalhado */}
+                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800 font-semibold">
+                      {row.metaFinPremiacao > 0 ? fmtCur(row.metaFinPremiacao) : "R$ -"}
                     </td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-purple-900 font-semibold">
-                      {fmtCur(row.realFin)}
+                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800">
+                      {"R$ -"}
                     </td>
-                    <td className="px-2 py-2 text-right font-mono text-slate-700">
-                      {row.precoMedio > 0 ? fmtCur(row.precoMedio) : "-"}
+                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800">
+                      {row.precoMedio > 0 ? fmtCur(row.precoMedio) : "R$ -"}
+                    </td>
+                    <td className={`px-2 py-2 text-right font-mono font-bold ${row.pctCx >= 90 ? "text-emerald-600" : "text-rose-600"}`}>
+                      {row.metaCx > 0 ? fmtPct(row.pctCx) : "0,00%"}
                     </td>
                   </tr>
                 );
@@ -514,9 +523,18 @@ export default async function EquipePage() {
                 <td className={`px-2 py-3 text-right font-mono ${totalPctFin >= pctIdeal ? "text-emerald-400" : "text-rose-400"}`}>
                   {fmtPct(totalPctFin)}
                 </td>
-                <td colSpan={6} className="px-2 py-3 text-right text-slate-400 text-[10px]">
-                  **Proporcional acima 90%
-                </td>
+                <td colSpan={3} className="px-2 py-3" />
+                
+                {/* Premiação */}
+                <td className="px-2 py-3 text-right font-mono text-rose-500">#REF!</td>
+                <td className="px-2 py-3 text-right font-mono">R$ -</td>
+                <td className="px-2 py-3 text-right text-rose-500">POSITIVAÇÃO</td>
+                <td className="px-2 py-3 text-right font-mono text-rose-500">{fmtPct(pctPositivacaoRealizado)}</td>
+              </tr>
+              <tr className="bg-slate-900 text-white font-bold border-t border-slate-700">
+                <td colSpan={14} className="px-3 py-2 text-right"></td>
+                <td className="px-2 py-2 text-right text-rose-500">FINANCEIRO</td>
+                <td className="px-2 py-2 text-right font-mono text-rose-500">{fmtPct(pctFinanceiroRealizado)}</td>
               </tr>
             </tfoot>
           </table>
