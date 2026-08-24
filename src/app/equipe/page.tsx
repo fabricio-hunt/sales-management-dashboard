@@ -281,6 +281,7 @@ export default async function EquipePage() {
   const totalRealCx = tableData.reduce((s, r) => s + r.realCx, 0);
   const totalPctFin = totalMetaFin > 0 ? (totalRealFin / totalMetaFin) * 100 : 0;
   const totalPctCx = totalMetaCx > 0 ? (totalRealCx / totalMetaCx) * 100 : 0;
+  const totalMetaFinPremiacao = tableData.reduce((s, r) => s + r.metaFinPremiacao, 0);
 
   // Formatters
   const fmtPct = (v: number) => `${v.toFixed(2)}%`;
@@ -526,7 +527,7 @@ export default async function EquipePage() {
                 <td colSpan={3} className="px-2 py-3" />
                 
                 {/* Premiação */}
-                <td className="px-2 py-3 text-right font-mono text-rose-500">#REF!</td>
+                <td className="px-2 py-3 text-right font-mono text-amber-300">{fmtCur(totalMetaFinPremiacao)}</td>
                 <td className="px-2 py-3 text-right font-mono">R$ -</td>
                 <td className="px-2 py-3 text-right text-rose-500">POSITIVAÇÃO</td>
                 <td className="px-2 py-3 text-right font-mono text-rose-500">{fmtPct(pctPositivacaoRealizado)}</td>

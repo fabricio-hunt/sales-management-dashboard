@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -71,9 +72,15 @@ export function Sidebar() {
     <>
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 border-b bg-white shrink-0 z-40 relative">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
-          Avante
-        </h1>
+        <Link href="/">
+          <Image
+            src="/logo.jpg"
+            alt="Avante Distribuição"
+            width={48}
+            height={48}
+            className="object-cover rounded-full shadow-sm"
+          />
+        </Link>
         <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
           <Menu className="w-6 h-6" />
         </button>
@@ -89,12 +96,16 @@ export function Sidebar() {
 
       {/* Sidebar Content */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"} flex flex-col h-screen shrink-0`}>
-        <div className="h-16 flex items-center justify-between px-6 border-b shrink-0">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
-            Avante
-            <br />
-            Distribuição
-          </h1>
+        <div className="h-20 flex items-center justify-between px-6 border-b shrink-0 py-4">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.jpg"
+              alt="Avante Distribuição"
+              width={72}
+              height={72}
+              className="object-cover rounded-full shadow-sm"
+            />
+          </Link>
           <button onClick={() => setIsOpen(false)} className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-md">
             <X className="w-5 h-5" />
           </button>
