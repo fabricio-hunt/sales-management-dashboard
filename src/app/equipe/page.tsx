@@ -187,16 +187,22 @@ export default async function EquipePage() {
 
   vendas.forEach((v) => {
     if (v.data_venda) diasComVendasSet.add(v.data_venda);
-    if (v.is_positivacao === 1 && v.cliente_id) clientesPositivadosSet.add(v.cliente_id);
 
     const vendaLiq = Number(v.venda_liq) || 0;
     const qtde = Number(v.qtde) || 0;
-    receitaTotal += vendaLiq;
 
     const rawNome = Array.isArray(v.produtos)
       ? v.produtos[0]?.fornecedor_nome
       : v.produtos?.fornecedor_nome;
     const fornecedorKey = rawNome ? normalizeFornecedor(rawNome) : "Outros";
+
+    // Só consideramos faturamento e positivação para fornecedores mapeados na meta
+    if (METAS_FORNECEDOR[fornecedorKey]) {
+      receitaTotal += vendaLiq;
+      if (v.is_positivacao === 1 && v.cliente_id) {
+        clientesPositivadosSet.add(v.cliente_id);
+      }
+    }
 
     if (!fornecedoresMap[fornecedorKey]) {
       fornecedoresMap[fornecedorKey] = { realCx: 0, realFin: 0, clientes: new Set(), vendaLiqTotal: 0, qtdeTotal: 0 };
