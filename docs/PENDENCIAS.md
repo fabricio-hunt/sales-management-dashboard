@@ -7,6 +7,29 @@ Documento criado para registrar todos os pontos abertos antes de continuar o des
 > resolvida com decisão própria (documentada inline), já que o cliente ainda não tinha dado feedback. Ver
 > `supabase_migration_v1.sql` e `docs/01..05-*.md` atualizados pro estado real do sistema.
 
+## Continuar amanhã (a partir de 26/08/2026)
+
+Sessão de 25/08 também generalizou a importação em 4 pipelines independentes (`docs/03-importacao-excel.md`) e
+tentou rodar o primeiro import real do `DD PEDIDOS` de agosto/2026 — travou em dois bugs reais, um já corrigido
+em código, outro ainda pendente de ação no Supabase:
+
+1. **[Feito]** Guardrail de coluna esperava `POSIT`, mas o export real chama essa coluna de `PEDIDOS` — corrigido
+   em `src/lib/import/expectedColumns.ts` e `src/app/api/admin/import/vendas/route.ts` (commit
+   `fix: correct ERP column name for the positivacao flag...`).
+2. **[Bloqueado — precisa de ação manual no Supabase]** `supabase_migration_v1.sql` só foi aplicada pela metade:
+   as tabelas novas (`fornecedores`, `metas`, etc.) e as 2 funções RPC existem, mas `clientes.representante_id`,
+   `clientes.status`, `produtos.fornecedor_id`, `vendas.seq_erp`, `vendas.motivo_devolucao`, as 6 views de
+   agregação, e o bloqueio de RLS nas tabelas antigas (`representantes`/`clientes`/`produtos`/`vendas`) **não
+   existem** — confirmado programaticamente (anon key ainda escreve direto nessas tabelas). O arquivo já foi
+   editado pra ser 100% re-executável (`DROP POLICY IF EXISTS` antes de cada política) — falta só o usuário rodar
+   o arquivo inteiro de novo no SQL Editor.
+3. **Depois do passo 2:** reimportar o `DD PEDIDOS` de agosto/2026 via `/admin/importar` (endpoint
+   `/api/admin/import/vendas`) e confirmar que `/equipe` mostra positivação = 485 (não 533), batendo com
+   `RESUMO POSITIVAÇÃO`/`RESUMO DISTRIBUIÇÃO` da planilha.
+4. Comparar pelo menos 2 fornecedores (ex: Chef Clay, Riclan) entre `/equipe` e a aba `Equipe` da planilha,
+   célula a célula — verificação que ainda não foi feita com dado real.
+5. Depois de validado: considerar rodar `npm run build` + revisão final antes de mostrar a v1 pro cliente.
+
 ---
 
 ## 1. Divergência no número de Positivação
