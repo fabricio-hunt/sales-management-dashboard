@@ -18,7 +18,8 @@ em vez de pivots manuais.
 - `/app`: rotas da aplicação. Ver `05-componentes-e-layout.md` pro inventário completo de telas.
 - `/app/admin/actions.ts`: Server Actions — toda escrita no banco (metas, fornecedores, clientes, representantes,
   período) passa por aqui, usando a service role key. Nunca escreva direto do client com a anon key.
-- `/app/api/admin/import`: endpoint único de importação do `DD PEDIDOS`. Ver `03-importacao-excel.md`.
+- `/app/api/admin/import/{vendas,fornecedores,clientes,metas}`: 4 endpoints de importação independentes, um por
+  entidade. Ver `03-importacao-excel.md`.
 - `/components`: componentes reutilizáveis (`layout/Sidebar.tsx`, `ui/*`).
 - `/lib/supabase.ts`: cliente anon (só leitura, usado nas telas).
 - `/lib/supabaseAdmin.ts`: cliente com service role (só server-side).

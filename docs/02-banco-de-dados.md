@@ -37,6 +37,9 @@ Um registro por item de pedido faturado.
 - **`metas_representante`**: objetivos que não são por fornecedor — `obj_positivacao`, e overrides manuais de
   `cadastro_total`/`base_ativa` (a origem exata desses dois números no ERP não foi confirmada com o cliente; por
   padrão eles são contados a partir de `clientes`, mas um valor aqui tem prioridade).
+- **`import_log`**: uma linha por execução de qualquer um dos 4 imports (`tipo`, `arquivo_nome`, `sucesso`,
+  `linhas_processadas`, `linhas_ignoradas`, `periodo_inicio/fim`, `detalhes` jsonb). Alimenta a seção "Últimas
+  importações" em `/admin/importar` — ver `03-importacao-excel.md`.
 
 ## Views de agregação
 
