@@ -1,313 +1,234 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export const revalidate = 0;
 
-// ─── CONFIGURAÇÃO DO PERÍODO (atualizar mensalmente) ───
-const PERIODO = {
-  inicio: "2026-08-01",
-  fim: "2026-08-31",
-  label: "01/08/2026 a 31/08/2026",
-  diasUteis: 21,
-  regiao: "Jundiaí",
+type MetaRow = {
+  fornecedor_id: number;
+  representante_id: string;
+  meta_cx: number;
+  meta_dia_cx: number;
+  meta_fin: number;
+  preco_medio: number;
+  desafio_dist: number;
+  fornecedores: { nome_fantasia: string } | { nome_fantasia: string }[] | null;
 };
 
-// ─── DADOS EXTRAÍDOS DIRETAMENTE DA PLANILHA "Equipe" ───
-// Chave: nome do fornecedor exato como aparece na planilha / banco
-const METAS_FORNECEDOR: Record<
-  string,
-  { metaCx: number; metaDiaCx: number; metaFin: number; desafioDist: number; precoMedioPlanilha: number }
-> = {
-  "Chef Clay":              { metaCx: 365,  metaDiaCx: 16.78,  metaFin: 26490.95,  desafioDist: 192, precoMedioPlanilha: 76.25 },
-  "Chef Clay Granola":      { metaCx: 5,    metaDiaCx: 0.625,  metaFin: 433.89,    desafioDist: 56,  precoMedioPlanilha: 94.62 },
-  "Chef Clay Molhos":       { metaCx: 220,  metaDiaCx: 14.5,   metaFin: 14227.19,  desafioDist: 118, precoMedioPlanilha: 66.78 },
-  "Tapioca Chef Clay":      { metaCx: 60,   metaDiaCx: 5.875,  metaFin: 5901.09,   desafioDist: 40,  precoMedioPlanilha: 119.70 },
-  "Chef Clay Leite de Coco":{ metaCx: 155,  metaDiaCx: 13.81,  metaFin: 8466.66,   desafioDist: 92,  precoMedioPlanilha: 56.94 },
-  "Casaredo":               { metaCx: 245,  metaDiaCx: 6.625,  metaFin: 18763.16,  desafioDist: 144, precoMedioPlanilha: 79.99 },
-  "Coco & Cia":             { metaCx: 355,  metaDiaCx: 31.84,  metaFin: 44628.84,  desafioDist: 108, precoMedioPlanilha: 135.00 },
-  "Riclan":                 { metaCx: 1340, metaDiaCx: 28.65,  metaFin: 98502.68,  desafioDist: 370, precoMedioPlanilha: 85.00 },
-  "ZD Alimentos":           { metaCx: 315,  metaDiaCx: 15.62,  metaFin: 37165.97,  desafioDist: 266, precoMedioPlanilha: 115.50 },
-  "Portao de Cambui":       { metaCx: 135,  metaDiaCx: 7.08,   metaFin: 74924.82,  desafioDist: 310, precoMedioPlanilha: 582.99 },
-  "Ebicen":                 { metaCx: 180,  metaDiaCx: 5.84,   metaFin: 21262.77,  desafioDist: 150, precoMedioPlanilha: 123.00 },
-  "Montevergine":           { metaCx: 325,  metaDiaCx: 14.93,  metaFin: 25701.53,  desafioDist: 228, precoMedioPlanilha: 88.42 },
-  "Neugebauer":             { metaCx: 335,  metaDiaCx: 13.26,  metaFin: 86975.94,  desafioDist: 212, precoMedioPlanilha: 268.21 },
-  "Dgoias":                 { metaCx: 100,  metaDiaCx: 8.125,  metaFin: 19203.78,  desafioDist: 72,  precoMedioPlanilha: 210.17 },
-  "Bretzke":                { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 112, precoMedioPlanilha: 91.74 },
-  "Bricoflex":              { metaCx: 0,    metaDiaCx: 0,      metaFin: 0,         desafioDist: 84,  precoMedioPlanilha: 102.24 },
-  "V!be":                   { metaCx: 145,  metaDiaCx: 0,      metaFin: 11395.28,  desafioDist: 36,  precoMedioPlanilha: 0 },
-  "Delicia Nordestina":     { metaCx: 310,  metaDiaCx: 28.25,  metaFin: 25977.58,  desafioDist: 42,  precoMedioPlanilha: 1.00 },
-  "Toshiba":                { metaCx: 20,   metaDiaCx: 1.95,   metaFin: 13853.98,  desafioDist: 76,  precoMedioPlanilha: 793.31 },
-  "Danilla":                { metaCx: 53,   metaDiaCx: 2.19,   metaFin: 24375.27,  desafioDist: 184, precoMedioPlanilha: 466.35 },
-  "Dizioli":                { metaCx: 365,  metaDiaCx: 15.72,  metaFin: 53741.23,  desafioDist: 266, precoMedioPlanilha: 182.68 },
-  "Maruchan":               { metaCx: 250,  metaDiaCx: 12.25,  metaFin: 12863.65,  desafioDist: 64,  precoMedioPlanilha: 55.33 },
-  "Kobber":                 { metaCx: 75,   metaDiaCx: 6.60,   metaFin: 12214.90,  desafioDist: 102, precoMedioPlanilha: 171.22 },
-  "Fampar":                 { metaCx: 22,   metaDiaCx: 1.89,   metaFin: 11999.89,  desafioDist: 108, precoMedioPlanilha: 548.05 },
-  "Salcique":               { metaCx: 185,  metaDiaCx: 11.5,   metaFin: 10121.16,  desafioDist: 38,  precoMedioPlanilha: 60.81 },
-  "Marata":                 { metaCx: 1500, metaDiaCx: 63.17,  metaFin: 78747.85,  desafioDist: 256, precoMedioPlanilha: 61.23 },
+type RealizadoRow = {
+  fornecedor_id: number;
+  representante_id: string;
+  real_cx: number;
+  real_fin: number;
+  positivados: number;
+  distribuidos: number;
 };
 
-// Mapeamento COMPLETO: razão social do banco → nome fantasia da planilha
-// Baseado na inspeção dos produtos por fornecedor na planilha DD PEDIDOS
-const NOME_BANCO_PARA_PLANILHA: Record<string, string> = {
-  // Chef Clay - fabricante é ALGO MAIS TEMPEROS EIRELI (molhos, temperos, sal de parrilla)
-  "ALGO MAIS TEMPEROS EIRELI":            "Chef Clay Molhos",
-  // Chef Clay Leite de Coco - ECOVILLE DO BRASIL (geleia chef clay, leite de coco)
-  "ECOVILLE  DO  BRASIL  LIMITADA":       "Chef Clay Leite de Coco",
-  "ECOVILLE DO BRASIL LIMITADA":          "Chef Clay Leite de Coco",
-  // Chef Clay Granola - não identificado, mas Tapioca é MACAU ALIMENTOS
-  "MACAU ALIMENTOS LTDA":                 "Tapioca Chef Clay",
-  // Chef Clay - GN DISTRIBUIDORA (ketchup, molho barbecue chef clay)
-  "GN DISTRIBUIDORA DE ALIMENTOS LTDA":  "Chef Clay",
-  // Casaredo / Danilla - NUTRISUL (biscoito casaredo, wafer my bit)
-  "NUTRISUL S.A. PRODUTOS ALIMENTICIOS": "Casaredo",
-  // Casaredo - DOCE SABOR (dadinho, paçoca)
-  "DOCE SABOR INDUSTRIA E COMERCIO DE PRODU": "Casaredo",
-  // Coco & Cia - IND. MENDONCA BARRETO (coco flocado, ralado)
-  "IND. & COM. MENDONCA BARRETO LTDA":   "Coco & Cia",
-  // Riclan
-  "RICLAN":                              "Riclan",
-  "RICLAN SA":                           "Riclan",
-  // ZD Alimentos
-  "ZD ALIMENTOS S.A":                    "ZD Alimentos",
-  "ZD ALIMENTOS":                        "ZD Alimentos",
-  // Portão de Cambuí
-  "PORTAO DE CAMBUI DOCES E LATICINIOS LTDA": "Portao de Cambui",
-  "PORTAO DE CAMBUI":                    "Portao de Cambui",
-  // Ebicen - GLICO ALIMENTOS (snacks Glico, Ebicen)
-  "GLICO ALIMENTOS LT":                  "Ebicen",
-  "EBICEN":                              "Ebicen",
-  // Montevergine - DISTRIBUIDORA DE PRODUTOS ALIMENTICIOS M (torrone)
-  "DISTRIBUIDORA DE PRODUTOS ALIMENTICIOS M": "Montevergine",
-  "MONTEVERGINE":                        "Montevergine",
-  // Neugebauer
-  "NEUGEBAUER ALIMENTOS S/A":            "Neugebauer",
-  "NEUGEBAUER":                          "Neugebauer",
-  // Dgoias
-  "DGOIAS INDUSTRIA DE ALIMENTOS LTDA":  "Dgoias",
-  "DGOIAS IND":                          "Dgoias",
-  "DGOIAS":                              "Dgoias",
-  // Bricoflex
-  "BRICOFLEX, IMPORTACAO E EXPORTACAO, COME": "Bricoflex",
-  "BRICOFLEX":                           "Bricoflex",
-  // V!be - BLUE BEVERAGES (energético, refrigerante)
-  "BLUE BEVERAGES ENVASADORA LTDA":      "V!be",
-  "VIBE":                                "V!be",
-  "V!BE":                                "V!be",
-  // Delicia Nordestina - DISTRIBUIDORA DENOR LTDA (bolacha)
-  "DISTRIBUIDORA DENOR LTDA":            "Delicia Nordestina",
-  "DELICIA NORDESTINA":                  "Delicia Nordestina",
-  // Toshiba - HAYAMAX (pilhas Toshiba)
-  "HAYAMAX DISTRIBUIDORA DE PRODUTOS ELETRO": "Toshiba",
-  "TOSHIBA":                             "Toshiba",
-  // Danilla - IND E COM OLIVEIRA (doce de leite Oliveira)
-  "IND E COM OLIVEIRA LT":               "Danilla",
-  "DANILLA":                             "Danilla",
-  // Dizioli - BLUE ALIMENTOS EIRELI (chocolate em pó, granulado)
-  "BLUE ALIMENTOS EIRELI":               "Dizioli",
-  "DIZIOLI":                             "Dizioli",
-  // Maruchan
-  "MARUCHAN DO BRASIL, IMPORTACAO, EXPORTAC": "Maruchan",
-  "MARUCHAN":                            "Maruchan",
-  // Kobber
-  "KOBBER ALIMENTOS LT":                 "Kobber",
-  "KOBBER":                              "Kobber",
-  // Fampar - LINGUA DOCE LTDA (doces aurora, paçoca)
-  "LINGUA DOCE LTDA":                    "Fampar",
-  "FAMPAR":                              "Fampar",
-  // Salcique - JOAO SEVERINO CACIQUE (salgadinhos salcique)
-  "JOAO SEVERINO CACIQUE":               "Salcique",
-  "SALCIQUE":                            "Salcique",
-  "SALEIQUE":                            "Salcique",
-  // Marata
-  "MARATA SUCOS DO NORDESTE LTDA":       "Marata",
-  "MARATA":                              "Marata",
-  "MARATA - EXCLUSIVA":                  "Marata",
-  "MARATA VAREJO":                       "Marata",
-  // Bretzke (não identificado nos produtos, manter como está)
-  "BRETZKE":                             "Bretzke",
-  // Audaz Foods / Good Days Brasil - sem meta definida, agrupa como Outros
-  "AUDAZ FOODS LTDA":                    "Outros",
-  "GOOD  DAYS  BRASIL  LTDA":            "Outros",
-  "GOOD DAYS BRASIL LTDA":               "Outros",
-};
-
-// Valores reais da planilha (header)
-const CADASTRO_TOTAL = 1288;
-const BASE_ATIVA = 1214;
-const OBJ_POSITIVACAO = 605;
-const REALIZADO_POSITIVACAO_MANUAL = 533; // From DD POSITIVACAO sheet
-const META_FINANCEIRA_TOTAL = 737940.06;
-
-async function fetchAllVendas() {
-  let allVendas: any[] = [];
-  let from = 0;
-  const pageSize = 1000;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from("vendas")
-      .select("venda_liq, qtde, cliente_id, is_positivacao, data_venda, produtos(fornecedor_nome)")
-      .gte("data_venda", PERIODO.inicio)
-      .lte("data_venda", PERIODO.fim)
-      .range(from, from + pageSize - 1);
-
-    if (error) { console.error("Error:", error); break; }
-    if (data && data.length > 0) allVendas = allVendas.concat(data);
-    if (!data || data.length < pageSize) break;
-    from += pageSize;
-  }
-  return allVendas;
+function mesAtual() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-function normalizeFornecedor(nome: string): string {
-  const upper = nome.toUpperCase().trim();
-  // Exact match first
-  if (NOME_BANCO_PARA_PLANILHA[upper]) return NOME_BANCO_PARA_PLANILHA[upper];
-  // Partial match
-  for (const [key, val] of Object.entries(NOME_BANCO_PARA_PLANILHA)) {
-    if (upper.startsWith(key) || key.startsWith(upper)) return val;
-  }
-  // Return the original with proper casing if not found
-  return nome;
+function fornecedorNome(f: MetaRow["fornecedores"]): string {
+  if (!f) return "";
+  return Array.isArray(f) ? f[0]?.nome_fantasia ?? "" : f.nome_fantasia;
 }
 
-export default async function EquipePage() {
-  const vendas = await fetchAllVendas();
+const fmtPct = (v: number) => `${v.toFixed(2)}%`;
+const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+const fmtNum2 = (v: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+const fmtNum0 = (v: number) => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(v);
 
-  const diasComVendasSet = new Set<string>();
-  const clientesPositivadosSet = new Set<string>();
-  let receitaTotalEquipe = 0;
-  let receitaTotalGlobal = 0;
+export default async function EquipePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rep?: string }>;
+}) {
+  const { rep: repFiltro } = await searchParams;
+  const mes = mesAtual();
 
-  const fornecedoresMap: Record<string, {
-    realCx: number;
-    realFin: number;
-    clientes: Set<string>;
-    vendaLiqTotal: number;
-    qtdeTotal: number;
-  }> = {};
+  const { data: periodo, error: periodoErr } = await supabase
+    .from("periodos")
+    .select("*")
+    .eq("mes", mes)
+    .maybeSingle();
 
-  vendas.forEach((v) => {
-    if (v.data_venda) diasComVendasSet.add(v.data_venda);
+  if (periodoErr || !periodo) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 space-y-3">
+            <h1 className="text-lg font-bold text-amber-900">Período {mes.slice(0, 7)} não configurado</h1>
+            <p className="text-sm text-amber-800">
+              Nenhum registro em <code>periodos</code> para este mês (ou a migration v1 ainda não foi rodada no
+              Supabase). Cadastre o período em <Link href="/configuracoes" className="underline font-medium">/configuracoes</Link>{" "}
+              — dias úteis, datas de início/fim e região — e garanta que <code>supabase_migration_v1.sql</code> foi
+              executado.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-    const vendaLiq = Number(v.venda_liq) || 0;
-    const qtde = Number(v.qtde) || 0;
-    
-    // Sempre acumula no global
-    receitaTotalGlobal += vendaLiq;
+  const { data: metasRepRows } = await supabase
+    .from("metas_representante")
+    .select("*, representantes(nome)")
+    .eq("mes", mes);
 
-    const rawNome = Array.isArray(v.produtos)
-      ? v.produtos[0]?.fornecedor_nome
-      : v.produtos?.fornecedor_nome;
-    const fornecedorKey = rawNome ? normalizeFornecedor(rawNome) : "Outros";
+  const repsEquipe = (metasRepRows ?? []).map((r) => r.representante_id);
+  const repsAlvo = repFiltro ? [repFiltro] : repsEquipe;
 
-    // Só consideramos faturamento e positivação para fornecedores mapeados na meta
-    if (METAS_FORNECEDOR[fornecedorKey]) {
-      receitaTotalEquipe += vendaLiq;
-      if (v.is_positivacao === 1 && v.cliente_id) {
-        clientesPositivadosSet.add(v.cliente_id);
-      }
-    }
+  if (repsAlvo.length === 0) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 space-y-3">
+            <h1 className="text-lg font-bold text-amber-900">Nenhum representante configurado para {mes.slice(0, 7)}</h1>
+            <p className="text-sm text-amber-800">
+              Rode <code>scripts/seed_metas_v1.mjs</code> (ou cadastre manualmente em <code>metas_representante</code>) pra
+              popular metas do período.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-    if (!fornecedoresMap[fornecedorKey]) {
-      fornecedoresMap[fornecedorKey] = { realCx: 0, realFin: 0, clientes: new Set(), vendaLiqTotal: 0, qtdeTotal: 0 };
-    }
-    fornecedoresMap[fornecedorKey].realCx += qtde;
-    fornecedoresMap[fornecedorKey].realFin += vendaLiq;
-    fornecedoresMap[fornecedorKey].vendaLiqTotal += vendaLiq;
-    fornecedoresMap[fornecedorKey].qtdeTotal += qtde;
-    if (v.cliente_id) fornecedoresMap[fornecedorKey].clientes.add(v.cliente_id);
-  });
+  const [{ data: metasRows }, { data: realizadoRows }, { data: clientesAgg }] = await Promise.all([
+    supabase.from("metas").select("*, fornecedores(nome_fantasia)").eq("mes", mes).in("representante_id", repsAlvo),
+    supabase.from("vw_realizado_rep_fornecedor").select("*").eq("mes", mes).in("representante_id", repsAlvo),
+    supabase.from("clientes").select("representante_id, status").in("representante_id", repsAlvo),
+  ]);
 
-  // Merge any remaining "Outros" que não foram mapeados com fornecedores conhecidos de metas
-  const diasFaturado = 13; // Fixado conforme exigência da planilha
-  const diasRestam = 8; // Fixado conforme exigência da planilha
-  const pctIdeal = PERIODO.diasUteis > 0 ? (diasFaturado / PERIODO.diasUteis) * 100 : 0;
+  const { data: faturamentoDiario } = await supabase
+    .from("vw_faturamento_diario")
+    .select("data_venda, venda_liq, representante_id")
+    .gte("data_venda", periodo.data_inicio)
+    .lte("data_venda", periodo.data_fim)
+    .in("representante_id", repsAlvo);
 
-  const positivadosCount = REALIZADO_POSITIVACAO_MANUAL; // Usando o número fixo (533) da aba DD POSITIVACAO do Excel
-  const faltaPositivar = Math.max(0, OBJ_POSITIVACAO - positivadosCount);
-  const pctPositivacaoRealizado = OBJ_POSITIVACAO > 0 ? (positivadosCount / OBJ_POSITIVACAO) * 100 : 0;
-  
-  // A Venda Real Mês usa apenas os fornecedores da meta
-  const pctFinanceiroRealizado = META_FINANCEIRA_TOTAL > 0 ? (receitaTotalEquipe / META_FINANCEIRA_TOTAL) * 100 : 0;
-  
-  // A Planilha Original calcula a Projeção usando o faturamento GLOBAL (incluindo Outros), por isso o uso de receitaTotalGlobal
-  const projecaoFechamento = diasFaturado > 0 ? (receitaTotalGlobal / diasFaturado) * PERIODO.diasUteis : 0;
-  const pctProjecao = META_FINANCEIRA_TOTAL > 0 ? (projecaoFechamento / META_FINANCEIRA_TOTAL) * 100 : 0;
-  
-  // Necessidade de Venda Dia também usa o GLOBAL na planilha original para encontrar a diferença (R$ 737.940,06 - 490.242,27 = 247.697,79 / 8 = 30.962,22)
-  const faltaFinanceiro = Math.max(0, META_FINANCEIRA_TOTAL - receitaTotalGlobal);
+  // ─── Dias faturado/restam: calculado ao vivo, nunca hardcoded ───
+  const diasComVenda = new Set((faturamentoDiario ?? []).map((r) => r.data_venda));
+  const diasFaturado = diasComVenda.size;
+  const diasRestam = Math.max(0, periodo.dias_uteis - diasFaturado);
+  const pctIdeal = periodo.dias_uteis > 0 ? (diasFaturado / periodo.dias_uteis) * 100 : 0;
+
+  const receitaTotalGlobal = (faturamentoDiario ?? []).reduce((s, r) => s + Number(r.venda_liq), 0);
+
+  // ─── Positivação/cadastro/base ativa: metas_representante + clientes (override manual disponível) ───
+  const metasRepAlvo = (metasRepRows ?? []).filter((r) => repsAlvo.includes(r.representante_id));
+  const objPositivacao = metasRepAlvo.reduce((s, r) => s + (r.obj_positivacao ?? 0), 0);
+
+  const cadastroTotal = metasRepAlvo.some((r) => r.cadastro_total_override != null)
+    ? metasRepAlvo.reduce((s, r) => s + (r.cadastro_total_override ?? 0), 0)
+    : (clientesAgg ?? []).length;
+  const baseAtiva = metasRepAlvo.some((r) => r.base_ativa_override != null)
+    ? metasRepAlvo.reduce((s, r) => s + (r.base_ativa_override ?? 0), 0)
+    : (clientesAgg ?? []).filter((c) => c.status === "ativo").length;
+
+  const { data: positivacaoRows } = await supabase
+    .from("vw_positivacao_representante")
+    .select("*")
+    .eq("mes", mes)
+    .in("representante_id", repsAlvo);
+  // Soma simples por representante — mesma lógica da planilha (RESUMO POSITIVAÇÃO),
+  // não deduplica cliente entre representantes diferentes.
+  const positivadosCount = (positivacaoRows ?? []).reduce((s, r) => s + Number(r.positivados), 0);
+  const faltaPositivar = Math.max(0, objPositivacao - positivadosCount);
+  const pctPositivacaoRealizado = objPositivacao > 0 ? (positivadosCount / objPositivacao) * 100 : 0;
+
+  // ─── Financeiro por fornecedor (só fornecedores com meta cadastrada) ───
+  const metaByFornecedor = new Map<number, { nome: string; meta_cx: number; meta_dia_cx: number; meta_fin: number; desafio_dist: number; preco_medio: number }>();
+  for (const m of (metasRows ?? []) as unknown as MetaRow[]) {
+    const nome = fornecedorNome(m.fornecedores);
+    const acc = metaByFornecedor.get(m.fornecedor_id) ?? {
+      nome, meta_cx: 0, meta_dia_cx: 0, meta_fin: 0, desafio_dist: 0, preco_medio: 0,
+    };
+    acc.meta_cx += Number(m.meta_cx);
+    acc.meta_dia_cx += Number(m.meta_dia_cx);
+    acc.meta_fin += Number(m.meta_fin);
+    acc.desafio_dist += Number(m.desafio_dist);
+    acc.preco_medio = Number(m.preco_medio) || acc.preco_medio;
+    metaByFornecedor.set(m.fornecedor_id, acc);
+  }
+
+  const realByFornecedor = new Map<number, { real_cx: number; real_fin: number; distribuidos: number }>();
+  for (const r of (realizadoRows ?? []) as RealizadoRow[]) {
+    const acc = realByFornecedor.get(r.fornecedor_id) ?? { real_cx: 0, real_fin: 0, distribuidos: 0 };
+    acc.real_cx += Number(r.real_cx);
+    acc.real_fin += Number(r.real_fin);
+    // aproximação: quando >1 rep, soma pode superestimar clientes distintos
+    // compartilhados entre reps — aceitável pra v1 (mesma limitação da planilha original)
+    acc.distribuidos += Number(r.distribuidos);
+    realByFornecedor.set(r.fornecedor_id, acc);
+  }
+
+  const receitaTotalEquipe = [...realByFornecedor.values()].reduce((s, r) => s + r.real_fin, 0);
+  const projecaoFechamento = diasFaturado > 0 ? (receitaTotalGlobal / diasFaturado) * periodo.dias_uteis : 0;
+  const totalMetaFin = [...metaByFornecedor.values()].reduce((s, m) => s + m.meta_fin, 0);
+  const pctFinanceiroRealizado = totalMetaFin > 0 ? (receitaTotalEquipe / totalMetaFin) * 100 : 0;
+  const pctProjecao = totalMetaFin > 0 ? (projecaoFechamento / totalMetaFin) * 100 : 0;
+  const faltaFinanceiro = Math.max(0, totalMetaFin - receitaTotalGlobal);
   const necessidadeVendaDia = diasRestam > 0 ? faltaFinanceiro / diasRestam : 0;
 
-  // Montar tabela: exibir APENAS fornecedores definidos na planilha Excel (metas)
-  const allFornecedorNames = new Set(Object.keys(METAS_FORNECEDOR));
+  const tableData = [...metaByFornecedor.entries()]
+    .map(([fornecedorId, meta]) => {
+      const real = realByFornecedor.get(fornecedorId) ?? { real_cx: 0, real_fin: 0, distribuidos: 0 };
+      const faltaDist = Math.max(0, meta.desafio_dist - real.distribuidos);
+      const pctCx = meta.meta_cx > 0 ? (real.real_cx / meta.meta_cx) * 100 : 0;
+      const pctFin = meta.meta_fin > 0 ? (real.real_fin / meta.meta_fin) * 100 : 0;
+      return {
+        nome: meta.nome,
+        metaCx: meta.meta_cx,
+        realCx: real.real_cx,
+        pctCx,
+        metaDiaCx: meta.meta_dia_cx,
+        metaFin: meta.meta_fin,
+        realFin: real.real_fin,
+        pctFin,
+        desafioDist: meta.desafio_dist,
+        realDist: real.distribuidos,
+        faltaDist,
+        precoMedio: meta.preco_medio,
+      };
+    })
+    .sort((a, b) => b.metaFin - a.metaFin);
 
-  const tableData = Array.from(allFornecedorNames).map((nome) => {
-    const dados = fornecedoresMap[nome] || { realCx: 0, realFin: 0, clientes: new Set(), vendaLiqTotal: 0, qtdeTotal: 0 };
-    const meta = METAS_FORNECEDOR[nome] || { metaCx: 0, metaDiaCx: 0, metaFin: 0, desafioDist: 0 };
-    const realDist = dados.clientes.size;
-    const faltaDist = Math.max(0, meta.desafioDist - realDist);
-    const precoMedio = dados.qtdeTotal > 0 ? dados.vendaLiqTotal / dados.qtdeTotal : 0;
-    const pctCx = meta.metaCx > 0 ? (dados.realCx / meta.metaCx) * 100 : 0;
-    const pctFin = meta.metaFin > 0 ? (dados.realFin / meta.metaFin) * 100 : 0;
-    
-    // Novo bloco: Financeiro Detalhado conforme planilha (Premiação)
-    const precoMedioPlanilha = meta.precoMedioPlanilha || 0;
-    const metaFinPremiacao = meta.metaCx * precoMedioPlanilha;
-
-    return {
-      nome,
-      metaCx: meta.metaCx,
-      realCx: dados.realCx,
-      pctCx,
-      metaDiaCx: meta.metaDiaCx,
-      metaFin: meta.metaFin,
-      realFin: dados.realFin,
-      pctFin,
-      desafioDist: meta.desafioDist,
-      realDist,
-      faltaDist,
-      precoMedio: precoMedioPlanilha, // Usando o preço médio fixado da planilha
-      metaFinPremiacao, // Meta Financeira = Volume Caixa * Preço Médio
-    };
-  });
-
-  // Mantém a ordem exata da planilha (definida em METAS_FORNECEDOR)
-
-  // Totais
-  const totalMetaFin = tableData.reduce((s, r) => s + r.metaFin, 0);
-  const totalRealFin = tableData.reduce((s, r) => s + r.realFin, 0);
   const totalMetaCx = tableData.reduce((s, r) => s + r.metaCx, 0);
   const totalRealCx = tableData.reduce((s, r) => s + r.realCx, 0);
-  const totalPctFin = totalMetaFin > 0 ? (totalRealFin / totalMetaFin) * 100 : 0;
+  const totalRealFin = tableData.reduce((s, r) => s + r.realFin, 0);
   const totalPctCx = totalMetaCx > 0 ? (totalRealCx / totalMetaCx) * 100 : 0;
-  const totalMetaFinPremiacao = tableData.reduce((s, r) => s + r.metaFinPremiacao, 0);
+  const totalPctFin = totalMetaFin > 0 ? (totalRealFin / totalMetaFin) * 100 : 0;
 
-  // Formatters
-  const fmtPct = (v: number) => `${v.toFixed(2)}%`;
-  const fmtCur = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-  const fmtNum2 = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
-  const fmtNum0 = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(v);
+  const regiaoLabel = repFiltro
+    ? `${periodo.regiao ?? ""} · Rep ${repFiltro}`
+    : periodo.regiao ?? "";
 
   return (
     <div className="p-4 md:p-6 max-w-[1700px] mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {repFiltro && (
+        <Link href="/equipe" className="text-sm text-blue-600 hover:underline">
+          &larr; Voltar pra visão consolidada da equipe
+        </Link>
+      )}
 
       {/* ─── HEADER ─── */}
       <div className="bg-slate-900 text-white rounded-xl shadow-lg overflow-hidden">
         <div className="flex flex-col md:flex-row items-stretch">
           <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-700">
-            <div className="text-2xl font-black text-white tracking-tight">{PERIODO.regiao}</div>
-            <div className="text-slate-400 text-sm mt-1">Período: {PERIODO.label}</div>
+            <div className="text-2xl font-black text-white tracking-tight">{regiaoLabel}</div>
+            <div className="text-slate-400 text-sm mt-1">
+              Período: {periodo.data_inicio} a {periodo.data_fim}
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-slate-700 border-t md:border-t-0 border-slate-700 flex-1">
             {[
-              { label: "Dias Úteis",    value: PERIODO.diasUteis, color: "text-white" },
-              { label: "Dias Faturado", value: diasFaturado,      color: "text-blue-400" },
-              { label: "Dias Restam",   value: diasRestam,        color: "text-amber-400" },
-              { label: "% Ideal",       value: fmtPct(pctIdeal),  color: "text-emerald-400" },
+              { label: "Dias Úteis", value: periodo.dias_uteis, color: "text-white" },
+              { label: "Dias Faturado", value: diasFaturado, color: "text-blue-400" },
+              { label: "Dias Restam", value: diasRestam, color: "text-amber-400" },
+              { label: "% Ideal", value: fmtPct(pctIdeal), color: "text-emerald-400" },
             ].map(({ label, value, color }) => (
               <div key={label} className="px-4 py-4 md:px-6 md:py-5 text-center flex flex-col justify-center">
                 <p className="text-slate-400 uppercase font-semibold text-[10px] tracking-wider mb-1">{label}</p>
@@ -321,7 +242,6 @@ export default async function EquipePage() {
       {/* ─── SCORECARDS ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Bloco: Positivação */}
         <Card className="overflow-hidden border-0 shadow-md">
           <div className="bg-slate-800 px-4 py-2">
             <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Positivação de Clientes</p>
@@ -330,12 +250,12 @@ export default async function EquipePage() {
             <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
-                  { label: "Cadastro Total",   value: fmtNum0(CADASTRO_TOTAL),         color: "text-slate-900",  bg: "" },
-                  { label: "Base Ativa",        value: fmtNum0(BASE_ATIVA),             color: "text-slate-900",  bg: "" },
-                  { label: "Obj. Positivação",  value: fmtNum0(OBJ_POSITIVACAO),        color: "text-amber-600",  bg: "bg-amber-50" },
-                  { label: "Realizado Mês",     value: fmtNum0(positivadosCount),       color: "text-slate-900",  bg: "" },
-                  { label: "Falta Positivar",   value: fmtNum0(faltaPositivar),         color: "text-rose-600 font-bold", bg: "bg-yellow-50" },
-                  { label: "% Realizado",       value: fmtPct(pctPositivacaoRealizado), color: pctPositivacaoRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
+                  { label: "Cadastro Total", value: fmtNum0(cadastroTotal), color: "text-slate-900", bg: "" },
+                  { label: "Base Ativa", value: fmtNum0(baseAtiva), color: "text-slate-900", bg: "" },
+                  { label: "Obj. Positivação", value: fmtNum0(objPositivacao), color: "text-amber-600", bg: "bg-amber-50" },
+                  { label: "Realizado Mês", value: fmtNum0(positivadosCount), color: "text-slate-900", bg: "" },
+                  { label: "Falta Positivar", value: fmtNum0(faltaPositivar), color: "text-rose-600 font-bold", bg: "bg-yellow-50" },
+                  { label: "% Realizado", value: fmtPct(pctPositivacaoRealizado), color: pctPositivacaoRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
                 ].map(({ label, value, color, bg }) => (
                   <tr key={label} className={`border-b hover:bg-slate-50 ${bg}`}>
                     <td className="px-4 py-2.5 text-slate-600 font-medium">{label}</td>
@@ -347,7 +267,6 @@ export default async function EquipePage() {
           </CardContent>
         </Card>
 
-        {/* Bloco: Financeiro */}
         <Card className="overflow-hidden border-0 shadow-md">
           <div className="bg-slate-800 px-4 py-2">
             <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Resultado Financeiro</p>
@@ -356,12 +275,12 @@ export default async function EquipePage() {
             <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
-                  { label: "Obj. Financeiro",     value: fmtCur(META_FINANCEIRA_TOTAL),  color: "text-amber-600",  bg: "bg-amber-50" },
-                  { label: "Vda Real. Mês",        value: fmtCur(receitaTotalEquipe),     color: "text-slate-900",  bg: "" },
-                  { label: "% Realizado",          value: fmtPct(pctFinanceiroRealizado), color: pctFinanceiroRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
-                  { label: "Projeção Fech.",       value: fmtCur(projecaoFechamento),     color: "text-slate-900",  bg: "" },
-                  { label: "% Projeção Fech.",     value: fmtPct(pctProjecao),            color: pctProjecao >= 100 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
-                  { label: "Necessidade Venda/dia",value: fmtCur(necessidadeVendaDia),    color: "text-amber-700 font-bold", bg: "bg-yellow-50" },
+                  { label: "Obj. Financeiro", value: fmtCur(totalMetaFin), color: "text-amber-600", bg: "bg-amber-50" },
+                  { label: "Vda Real. Mês", value: fmtCur(receitaTotalEquipe), color: "text-slate-900", bg: "" },
+                  { label: "% Realizado", value: fmtPct(pctFinanceiroRealizado), color: pctFinanceiroRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
+                  { label: "Projeção Fech.", value: fmtCur(projecaoFechamento), color: "text-slate-900", bg: "" },
+                  { label: "% Projeção Fech.", value: fmtPct(pctProjecao), color: pctProjecao >= 100 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
+                  { label: "Necessidade Venda/dia", value: fmtCur(necessidadeVendaDia), color: "text-amber-700 font-bold", bg: "bg-yellow-50" },
                 ].map(({ label, value, color, bg }) => (
                   <tr key={label} className={`border-b hover:bg-slate-50 ${bg}`}>
                     <td className="px-4 py-2.5 text-slate-600 font-medium">{label}</td>
@@ -381,7 +300,7 @@ export default async function EquipePage() {
             Objetivo em Caixas · Meta Financeira · Desafio Distribuição
           </h2>
           <span className="text-slate-400 text-xs bg-slate-700 px-3 py-1 rounded-full">
-            {tableData.filter(r => r.realFin > 0 || r.metaFin > 0).length} fornecedores
+            {tableData.length} fornecedores
           </span>
         </div>
 
@@ -391,72 +310,40 @@ export default async function EquipePage() {
               <tr>
                 <th className="px-3 py-2 border-b border-r bg-slate-100 font-bold text-slate-700 text-center" rowSpan={2}>CM</th>
                 <th className="px-3 py-2 border-b border-r bg-slate-100 font-bold text-slate-700" rowSpan={2}>Fornecedor</th>
-
-                {/* Objetivo em Caixas */}
-                <th colSpan={4} className="px-3 py-1.5 border-b border-r text-center font-bold bg-yellow-100 text-yellow-900 border-t">
-                  Objetivo em Caixas
-                </th>
-
-                {/* Meta Financeira */}
-                <th colSpan={3} className="px-3 py-1.5 border-b border-r text-center font-bold bg-green-100 text-green-900 border-t">
-                  Meta Financeira
-                </th>
-
-                {/* Desafio Dist. */}
-                <th colSpan={3} className="px-3 py-1.5 border-b border-r text-center font-bold bg-blue-100 text-blue-900 border-t">
-                  Desafio Distribuição Numérica
-                </th>
-
-                {/* Preço médio (Premiação) */}
-                <th colSpan={4} className="px-3 py-1.5 border-b text-center font-bold bg-yellow-100 text-yellow-900 border-t">
-                  Premiação
-                </th>
+                <th colSpan={4} className="px-3 py-1.5 border-b border-r text-center font-bold bg-yellow-100 text-yellow-900 border-t">Objetivo em Caixas</th>
+                <th colSpan={3} className="px-3 py-1.5 border-b border-r text-center font-bold bg-green-100 text-green-900 border-t">Meta Financeira</th>
+                <th colSpan={3} className="px-3 py-1.5 border-b text-center font-bold bg-blue-100 text-blue-900 border-t">Desafio Distribuição Numérica</th>
               </tr>
               <tr className="bg-slate-50 text-[10px] text-slate-600 uppercase tracking-wide">
                 <th className="px-2 py-1.5 border-b border-r text-right">Volume Cx</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">Venda Real.</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">% Real.</th>
                 <th className="px-2 py-1.5 border-b border-r text-right bg-yellow-50">Meta Dia (Cx)</th>
-
                 <th className="px-2 py-1.5 border-b border-r text-right">Meta R$</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">Realizado</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">% Real.</th>
-
                 <th className="px-2 py-1.5 border-b border-r text-right">Desafio</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">Realizado</th>
-                <th className="px-2 py-1.5 border-b border-r text-right">Falta</th>
-
-                <th className="px-2 py-1.5 border-b border-r text-right">Meta Financeira</th>
-                <th className="px-2 py-1.5 border-b border-r text-right">Realizado</th>
-                <th className="px-2 py-1.5 border-b border-r text-right">Preço Médio</th>
-                <th className="px-2 py-1.5 border-b text-right">Premiação</th>
+                <th className="px-2 py-1.5 border-b text-right">Falta</th>
               </tr>
             </thead>
             <tbody>
               {tableData.length === 0 && (
                 <tr>
-                  <td colSpan={15} className="text-center py-12 text-slate-400">
-                    Nenhum dado encontrado para o período selecionado.
+                  <td colSpan={11} className="text-center py-12 text-slate-400">
+                    Nenhuma meta cadastrada pra este período (rode scripts/seed_metas_v1.mjs ou cadastre em /admin/metas).
                   </td>
                 </tr>
               )}
               {tableData.map((row, idx) => {
-
                 const isCxBad = row.metaCx > 0 && row.pctCx < pctIdeal;
                 const isFinBad = row.metaFin > 0 && row.pctFin < pctIdeal;
                 const isDistBad = row.desafioDist > 0 && row.realDist < row.desafioDist * (pctIdeal / 100);
 
                 return (
-                  <tr
-                    key={row.nome}
-                    className={`border-b transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"} hover:bg-blue-50/40`}
-                  >
+                  <tr key={row.nome} className={`border-b transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"} hover:bg-blue-50/40`}>
                     <td className="px-2 py-2 border-r text-center text-slate-400 font-mono">{idx + 1}</td>
-                    <td className="px-3 py-2 border-r font-semibold text-slate-800 whitespace-nowrap max-w-[150px] truncate">
-                      {row.nome}
-                    </td>
-
-                    {/* Caixas */}
+                    <td className="px-3 py-2 border-r font-semibold text-slate-800 whitespace-nowrap max-w-[150px] truncate">{row.nome}</td>
                     <td className="px-2 py-2 border-r text-right font-mono text-slate-700">{fmtNum2(row.metaCx || 0)}</td>
                     <td className="px-2 py-2 border-r text-right font-mono font-semibold text-slate-900">{fmtNum2(row.realCx)}</td>
                     <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaCx > 0 ? (isCxBad ? "text-rose-600 bg-rose-50" : "text-emerald-600") : "text-slate-400"}`}>
@@ -465,82 +352,52 @@ export default async function EquipePage() {
                     <td className="px-2 py-2 border-r text-right font-mono bg-yellow-50 text-yellow-800 font-bold">
                       {row.metaDiaCx > 0 ? fmtNum2(row.metaDiaCx) : "-"}
                     </td>
-
-                    {/* Financeiro */}
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">
-                      {row.metaFin > 0 ? fmtCur(row.metaFin) : "-"}
-                    </td>
-                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-slate-900">
-                      {fmtCur(row.realFin)}
-                    </td>
+                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">{row.metaFin > 0 ? fmtCur(row.metaFin) : "-"}</td>
+                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-slate-900">{fmtCur(row.realFin)}</td>
                     <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaFin > 0 ? (isFinBad ? "text-rose-600 bg-rose-50" : "text-emerald-700") : "text-slate-400"}`}>
                       {row.metaFin > 0 ? fmtPct(row.pctFin) : "-"}
                     </td>
-
-                    {/* Distribuição */}
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">
-                      {row.desafioDist > 0 ? fmtNum0(row.desafioDist) : "-"}
-                    </td>
-                    <td className={`px-2 py-2 border-r text-right font-mono font-semibold ${isDistBad ? "text-rose-600" : "text-slate-900"}`}>
-                      {fmtNum0(row.realDist)}
-                    </td>
-                    <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.faltaDist > 0 ? "text-rose-500" : "text-emerald-600"}`}>
+                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">{row.desafioDist > 0 ? fmtNum0(row.desafioDist) : "-"}</td>
+                    <td className={`px-2 py-2 border-r text-right font-mono font-semibold ${isDistBad ? "text-rose-600" : "text-slate-900"}`}>{fmtNum0(row.realDist)}</td>
+                    <td className={`px-2 py-2 text-right font-mono font-bold ${row.faltaDist > 0 ? "text-rose-500" : "text-emerald-600"}`}>
                       {row.desafioDist > 0 ? (row.faltaDist > 0 ? fmtNum0(row.faltaDist) : "✓") : "-"}
-                    </td>
-
-                    {/* Premiação Detalhado */}
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800 font-semibold">
-                      {row.metaFinPremiacao > 0 ? fmtCur(row.metaFinPremiacao) : "R$ -"}
-                    </td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800">
-                      {"R$ -"}
-                    </td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-800">
-                      {row.precoMedio > 0 ? fmtCur(row.precoMedio) : "R$ -"}
-                    </td>
-                    <td className={`px-2 py-2 text-right font-mono font-bold ${row.pctCx >= 90 ? "text-emerald-600" : "text-rose-600"}`}>
-                      {row.metaCx > 0 ? fmtPct(row.pctCx) : "0,00%"}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-
-            {/* Rodapé */}
             <tfoot>
               <tr className="bg-slate-900 text-white font-bold border-t-2 border-slate-600">
-                <td colSpan={2} className="px-3 py-3 text-xs uppercase tracking-wider">
-                  TOTAL &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;
-                </td>
+                <td colSpan={2} className="px-3 py-3 text-xs uppercase tracking-wider">TOTAL</td>
                 <td className="px-2 py-3 text-right font-mono">{fmtNum2(totalMetaCx)}</td>
                 <td className="px-2 py-3 text-right font-mono">{fmtNum2(totalRealCx)}</td>
                 <td className={`px-2 py-3 text-right font-mono ${totalPctCx >= pctIdeal ? "text-emerald-400" : "text-rose-400"}`}>
                   {totalMetaCx > 0 ? fmtPct(totalPctCx) : "-"}
                 </td>
                 <td className="px-2 py-3" />
-
                 <td className="px-2 py-3 text-right font-mono text-amber-300">{fmtCur(totalMetaFin)}</td>
                 <td className="px-2 py-3 text-right font-mono text-emerald-300">{fmtCur(totalRealFin)}</td>
-                <td className={`px-2 py-3 text-right font-mono ${totalPctFin >= pctIdeal ? "text-emerald-400" : "text-rose-400"}`}>
-                  {fmtPct(totalPctFin)}
-                </td>
+                <td className={`px-2 py-3 text-right font-mono ${totalPctFin >= pctIdeal ? "text-emerald-400" : "text-rose-400"}`}>{fmtPct(totalPctFin)}</td>
                 <td colSpan={3} className="px-2 py-3" />
-                
-                {/* Premiação */}
-                <td className="px-2 py-3 text-right font-mono text-amber-300">{fmtCur(totalMetaFinPremiacao)}</td>
-                <td className="px-2 py-3 text-right font-mono">R$ -</td>
-                <td className="px-2 py-3 text-right text-rose-500">POSITIVAÇÃO</td>
-                <td className="px-2 py-3 text-right font-mono text-rose-500">{fmtPct(pctPositivacaoRealizado)}</td>
-              </tr>
-              <tr className="bg-slate-900 text-white font-bold border-t border-slate-700">
-                <td colSpan={14} className="px-3 py-2 text-right"></td>
-                <td className="px-2 py-2 text-right text-rose-500">FINANCEIRO</td>
-                <td className="px-2 py-2 text-right font-mono text-rose-500">{fmtPct(pctFinanceiroRealizado)}</td>
               </tr>
             </tfoot>
           </table>
         </div>
       </Card>
+
+      {!repFiltro && (
+        <div className="flex flex-wrap gap-2">
+          {repsEquipe.map((repId) => (
+            <Link
+              key={repId}
+              href={`/equipe?rep=${repId}`}
+              className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            >
+              Ver RPA {repId}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
