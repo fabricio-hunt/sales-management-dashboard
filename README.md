@@ -37,11 +37,24 @@ cp .env.example .env.local
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+The service role key (Project Settings > API) is required — all writes (import, metas, admin CRUD) go through
+Server Actions/Route Handlers using it, since RLS only allows public `SELECT`.
 
 ### 4. Set up the database
 
-Run the SQL script in `supabase_schema.sql` inside the **Supabase SQL Editor** of your project.
+Run, in order, in the **Supabase SQL Editor**:
+
+1. `supabase_schema.sql` — base tables.
+2. `supabase_migration_v1.sql` — metas/fornecedores/periodos tables, aggregation views, RLS lockdown, import RPCs.
+
+Then seed the current month's goals from the spreadsheet (one-time, idempotent):
+
+```bash
+node scripts/seed_metas_v1.mjs
+```
 
 ### 5. Run the development server
 
@@ -53,21 +66,32 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
-- **Dashboard Overview:** KPIs for total revenue, orders, active clients, and average margin.
-- **Admin Upload:** Drag & drop Excel (`.xlsx`) upload with browser-side parsing and batch insert to Supabase in chunks of 500 records.
-- **Sidebar Navigation:** Fast client-side routing with active link highlighting.
+- **`/equipe`** (and `/equipe?rep=<id>`): team/rep scorecards — goals, positivação, financeiro — computed live
+  from `vendas`, never hardcoded.
+- **`/admin/importar`:** single import pipeline (Node/TS, `/api/admin/import`) with column guardrails and
+  delete-and-reinsert idempotency per period.
+- **`/admin/metas`, `/admin/fornecedores`, `/admin/clientes`, `/admin/representantes`, `/configuracoes`:** CRUD for
+  everything that used to be hardcoded in source.
+- Analytics, rankings, distribution and a Curva ABC de Produtos page — see `docs/05-componentes-e-layout.md` for
+  the full route inventory.
 
 ## Project Structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx          # Dashboard overview
-│   ├── admin/page.tsx    # Excel upload & sync
-│   └── layout.tsx        # Root layout (Sidebar + Toaster)
+│   ├── page.tsx              # Dashboard hub
+│   ├── equipe/page.tsx       # Team/rep scorecards
+│   ├── admin/actions.ts      # All write Server Actions (service role)
+│   ├── api/admin/import/     # Single import endpoint
+│   └── layout.tsx            # Root layout (Sidebar + Toaster)
 ├── components/
 │   └── layout/Sidebar.tsx
 └── lib/
-    └── supabase.ts       # Supabase client
-supabase_schema.sql       # DB schema (run once in Supabase SQL Editor)
+    ├── supabase.ts           # Anon client (read)
+    ├── supabaseAdmin.ts      # Service role client (server-only writes)
+    └── import/expectedColumns.ts
+supabase_schema.sql          # Base schema
+supabase_migration_v1.sql    # v1 schema/views/RLS/RPCs
+scripts/seed_metas_v1.mjs    # One-time seed of metas from the spreadsheet
 ```
