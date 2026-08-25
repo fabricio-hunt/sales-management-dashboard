@@ -50,7 +50,7 @@ CREATE TABLE public.vendas (
   qtde NUMERIC(15,4),
   peso_bruto NUMERIC(15,4),
   peso_liq NUMERIC(15,4),
-  is_positivacao INTEGER DEFAULT 1, -- Equivalente à coluna POSIT
+  is_positivacao INTEGER DEFAULT 1, -- Equivalente à coluna "PEDIDOS" do export DD PEDIDOS (nome real, apesar de sugerir outra coisa)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 

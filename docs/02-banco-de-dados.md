@@ -23,8 +23,8 @@ Um registro por item de pedido faturado.
 - `venda_liq` (numeric): valor líquido da venda.
 - `qtde` (numeric): volume em caixas/unidades.
 - `data_venda` (date): data da transação.
-- `is_positivacao` (int): flag `POSIT` vinda direto do ERP — mantida como está, nunca recalculada em v1 (ver
-  `04-regras-de-negocio.md`).
+- `is_positivacao` (int): flag 0/1 vinda direto do ERP (coluna `PEDIDOS` no export `DD PEDIDOS`, apesar do nome) —
+  mantida como está, nunca recalculada em v1 (ver `04-regras-de-negocio.md`).
 - `cliente_id`, `representante_id`, `produto_id`: referências às dimensões.
 - `seq_erp`, `motivo_devolucao`: auditoria/detalhe vindos do export.
 

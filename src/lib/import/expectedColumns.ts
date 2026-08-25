@@ -11,7 +11,7 @@ export const EXPECTED_COLUMNS = [
   "TipoTabela", "Tipo Doc", "Codigo Kit", "Descrição Kit", "Grupo", "CPF\\CNPJ",
   "Nota Fiscal", "Devolução", "Desconto", "Compra", "Venda", "Qtde Saída",
   "Peso Bruto", "Peso Liq.", "Qtde Dev.", "Desconto Promocional",
-  "Qtde Itens Ped", "Desp. Acessória", "VDA LIQ", "TT VDA LIQ", "POSIT",
+  "Qtde Itens Ped", "Desp. Acessória", "VDA LIQ", "TT VDA LIQ", "PEDIDOS",
 ] as const;
 
 // Colunas dos templates próprios do sistema (não vêm do ERP) — imports

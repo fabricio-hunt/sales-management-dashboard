@@ -181,6 +181,13 @@ DROP POLICY IF EXISTS "Permitir full access clientes" ON public.clientes;
 DROP POLICY IF EXISTS "Permitir full access prod" ON public.produtos;
 DROP POLICY IF EXISTS "Permitir full access vendas" ON public.vendas;
 
+-- DROP IF EXISTS antes de cada CREATE POLICY torna o arquivo inteiro
+-- re-executável com segurança (CREATE POLICY sozinho não é idempotente).
+DROP POLICY IF EXISTS "Leitura publica representantes" ON public.representantes;
+DROP POLICY IF EXISTS "Leitura publica clientes" ON public.clientes;
+DROP POLICY IF EXISTS "Leitura publica produtos" ON public.produtos;
+DROP POLICY IF EXISTS "Leitura publica vendas" ON public.vendas;
+
 CREATE POLICY "Leitura publica representantes" ON public.representantes FOR SELECT USING (true);
 CREATE POLICY "Leitura publica clientes"       ON public.clientes       FOR SELECT USING (true);
 CREATE POLICY "Leitura publica produtos"       ON public.produtos       FOR SELECT USING (true);
@@ -191,6 +198,12 @@ ALTER TABLE public.fornecedor_aliases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.periodos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.metas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.metas_representante ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Leitura publica fornecedores" ON public.fornecedores;
+DROP POLICY IF EXISTS "Leitura publica aliases" ON public.fornecedor_aliases;
+DROP POLICY IF EXISTS "Leitura publica periodos" ON public.periodos;
+DROP POLICY IF EXISTS "Leitura publica metas" ON public.metas;
+DROP POLICY IF EXISTS "Leitura publica metas_rep" ON public.metas_representante;
 
 CREATE POLICY "Leitura publica fornecedores" ON public.fornecedores FOR SELECT USING (true);
 CREATE POLICY "Leitura publica aliases"      ON public.fornecedor_aliases FOR SELECT USING (true);

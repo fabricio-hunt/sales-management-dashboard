@@ -220,7 +220,9 @@ export async function POST(request: NextRequest) {
           qtde: toFloat(row["Qtde Saída"]),
           peso_bruto: toFloat(row["Peso Bruto"]),
           peso_liq: toFloat(row["Peso Liq."]),
-          is_positivacao: String(row["POSIT"]) === "1" ? 1 : 0,
+          // A coluna se chama "PEDIDOS" neste export do ERP (não "POSIT", apesar do nome
+          // sugerir outra coisa) — é a flag 0/1 de positivação, valores confirmados no arquivo real.
+          is_positivacao: String(row["PEDIDOS"]) === "1" ? 1 : 0,
           seq_erp: String(row["Seq"] ?? ""),
           motivo_devolucao: String(row["Descr.Motivo"] ?? "") || null,
         };

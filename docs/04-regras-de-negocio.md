@@ -14,7 +14,8 @@ Fornecedores vêm do ERP com razão social; o nome fantasia usado nas metas e te
 
 ## Positivação
 
-`is_positivacao` é a flag `POSIT` vinda direto do ERP, linha a linha — o sistema **não** recalcula essa regra em
+`is_positivacao` é a flag 0/1 vinda direto do ERP, linha a linha (coluna `PEDIDOS` no export `DD PEDIDOS`, apesar
+do nome sugerir outra coisa — confirmado no arquivo real) — o sistema **não** recalcula essa regra em
 v1 (mantida como está; ver ressalva em `PENDENCIAS.md` caso o cliente queira redefinir o critério depois).
 Positivação de um representante/equipe é `COUNT(DISTINCT cliente_id) WHERE is_positivacao = 1`, somado por
 representante (mesma lógica da aba `RESUMO POSITIVAÇÃO`/`RESUMO DISTRIBUIÇÃO` da planilha — não deduplica cliente
