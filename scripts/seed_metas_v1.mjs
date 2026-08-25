@@ -32,7 +32,7 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-const EXCEL_PATH = "../NV-RELATORIO DE VENDAS 2026 - AGOSTO - EQUIPE 94.xlsx";
+const EXCEL_PATH = "../../NV-RELATORIO DE VENDAS 2026 - AGOSTO - EQUIPE 94.xlsx";
 const REP_SHEETS = ["308", "310", "312", "401", "407", "408", "90"];
 
 // ─── Período (de PERIODO em equipe/page.tsx) ───
