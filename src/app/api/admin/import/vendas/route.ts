@@ -2,36 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import * as xlsx from "xlsx";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { EXPECTED_COLUMNS } from "@/lib/import/expectedColumns";
+import { chunk, toFloat, parseRepresentante, logImport } from "@/lib/import/shared";
 
-// Endpoint único de importação — substitui /api/upload (Python/subprocess,
-// não roda em serverless) e o insert antigo direto do browser. Roda 100%
-// em Node/TS, service role key, guardrails de coluna, upsert de dimensões
-// e delete-and-reinsert idempotente por período.
+// Import do DD PEDIDOS (vendas) — roda 100% em Node/TS, service role key,
+// guardrails de coluna, upsert de dimensões e delete-and-reinsert idempotente
+// por período. É o único dos 4 imports que não tem chave natural confiável
+// em vendas, por isso é o único que precisa de confirmação explícita antes
+// de substituir dados existentes do período.
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const CHUNK_SIZE = 500;
 
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
-
-function toFloat(v: unknown): number {
-  const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", "."));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function parseRepresentante(raw: unknown): { id: string; nome: string } | null {
-  const str = String(raw ?? "").trim();
-  if (!str) return null;
-  const match = str.match(/^(\d+)/);
-  const id = match ? match[1] : str;
-  return { id, nome: str };
-}
-
 export async function POST(request: NextRequest) {
+  let fileName: string | null = null;
   try {
     const formData = await request.formData();
     const file = formData.get("file") as unknown as File | null;
@@ -40,6 +24,7 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ success: false, error: "Nenhum arquivo enviado." }, { status: 400 });
     }
+    fileName = file.name;
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const wb = xlsx.read(buffer, { type: "buffer", cellDates: true });
@@ -208,13 +193,19 @@ export async function POST(request: NextRequest) {
     });
     if (delErr) throw delErr;
 
+    const motivosIgnoradas = new Map<string, number>();
+    const registraIgnorada = (motivo: string) => motivosIgnoradas.set(motivo, (motivosIgnoradas.get(motivo) ?? 0) + 1);
+
     const vendasArr = rows
       .map((row) => {
         const rep = parseRepresentante(row["Representante"]);
         const cliId = String(row["Cod.Pessoa"] ?? "").trim();
         const prodId = String(row["Código Produto"] ?? "").trim();
         const dataDoc = row["Data Documento"];
-        if (!rep || !cliId || !prodId || !(dataDoc instanceof Date) || isNaN(dataDoc.getTime())) return null;
+        if (!rep) { registraIgnorada("sem representante"); return null; }
+        if (!cliId) { registraIgnorada("sem cliente (Cod.Pessoa)"); return null; }
+        if (!prodId) { registraIgnorada("sem produto (Código Produto)"); return null; }
+        if (!(dataDoc instanceof Date) || isNaN(dataDoc.getTime())) { registraIgnorada("data inválida"); return null; }
 
         return {
           pedido_nr: String(row["Nr Pedido"] ?? ""),
@@ -236,18 +227,56 @@ export async function POST(request: NextRequest) {
       })
       .filter((v): v is NonNullable<typeof v> => v !== null);
 
+    const linhasIgnoradas = rows.length - vendasArr.length;
+
     let inserted = 0;
-    for (const c of chunk(vendasArr, CHUNK_SIZE)) {
-      const { error } = await supabaseAdmin.from("vendas").insert(c);
-      if (error) throw error;
-      inserted += c.length;
+    try {
+      for (const c of chunk(vendasArr, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from("vendas").insert(c);
+        if (error) throw error;
+        inserted += c.length;
+      }
+    } catch (insertError) {
+      await logImport({
+        tipo: "vendas",
+        arquivo_nome: fileName,
+        sucesso: false,
+        linhas_processadas: inserted,
+        linhas_ignoradas: linhasIgnoradas,
+        periodo_inicio: dataMin,
+        periodo_fim: dataMax,
+        detalhes: { erro: insertError instanceof Error ? insertError.message : String(insertError) },
+      });
+      const msg = insertError instanceof Error ? insertError.message : "Erro desconhecido";
+      return NextResponse.json({
+        success: false,
+        error: `Falha ao inserir vendas (${inserted} de ${vendasArr.length} linhas gravadas): ${msg}. O período ${dataMin} a ${dataMax} pode ter ficado incompleto — reenvie o mesmo arquivo pra corrigir (a importação é segura para repetir, ela apaga e recria o período inteiro).`,
+      }, { status: 500 });
     }
+
+    await logImport({
+      tipo: "vendas",
+      arquivo_nome: fileName,
+      sucesso: true,
+      linhas_processadas: inserted,
+      linhas_ignoradas: linhasIgnoradas,
+      periodo_inicio: dataMin,
+      periodo_fim: dataMax,
+      detalhes: {
+        representantes: representantesArr.length,
+        clientes: clientesArr.length,
+        produtos: produtosArr.length,
+        fornecedoresNovosParaRevisar: fornecedoresNovos,
+        motivosIgnoradas: Object.fromEntries(motivosIgnoradas),
+      },
+    });
 
     return NextResponse.json({
       success: true,
       message: `Importação concluída: ${inserted} vendas (${dataMin} a ${dataMax}).`,
       stats: {
         vendasInseridas: inserted,
+        linhasIgnoradas,
         representantes: representantesArr.length,
         clientes: clientesArr.length,
         produtos: produtosArr.length,
@@ -257,6 +286,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Import error:", error);
+    await logImport({
+      tipo: "vendas",
+      arquivo_nome: fileName,
+      sucesso: false,
+      detalhes: { erro: error instanceof Error ? error.message : String(error) },
+    });
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Falha no servidor ao processar o import." },
       { status: 500 }

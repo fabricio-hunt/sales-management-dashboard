@@ -1,22 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { EXPECTED_COLUMNS } from "@/lib/import/expectedColumns";
+import { EXPECTED_COLUMNS, FORNECEDOR_COLUMNS, CLIENTE_COLUMNS, META_COLUMNS } from "@/lib/import/expectedColumns";
 
-export async function GET() {
+const TEMPLATES = {
+  vendas: { columns: EXPECTED_COLUMNS, sheet: "DD PEDIDOS", filename: "Template_Importacao_Vendas.xlsx" },
+  fornecedores: { columns: FORNECEDOR_COLUMNS, sheet: "Fornecedores", filename: "Template_Importacao_Fornecedores.xlsx" },
+  clientes: { columns: CLIENTE_COLUMNS, sheet: "Clientes", filename: "Template_Importacao_Clientes.xlsx" },
+  metas: { columns: META_COLUMNS, sheet: "Metas", filename: "Template_Importacao_Metas.xlsx" },
+} as const;
+
+export async function GET(request: NextRequest) {
   try {
-    // Create an empty worksheet with just the headers
-    const worksheet = XLSX.utils.aoa_to_sheet([[...EXPECTED_COLUMNS]]);
-    
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "DD PEDIDOS");
+    const tipoParam = request.nextUrl.searchParams.get("tipo") ?? "vendas";
+    const tipo = (tipoParam in TEMPLATES ? tipoParam : "vendas") as keyof typeof TEMPLATES;
+    const template = TEMPLATES[tipo];
 
-    // Write the workbook to a buffer
+    const worksheet = XLSX.utils.aoa_to_sheet([[...template.columns]]);
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, template.sheet);
+
     const buf = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
     return new NextResponse(buf, {
       status: 200,
       headers: {
-        "Content-Disposition": `attachment; filename="Template_Importacao_Vendas.xlsx"`,
+        "Content-Disposition": `attachment; filename="${template.filename}"`,
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
     });

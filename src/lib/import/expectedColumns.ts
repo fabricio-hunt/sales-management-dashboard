@@ -13,3 +13,20 @@ export const EXPECTED_COLUMNS = [
   "Peso Bruto", "Peso Liq.", "Qtde Dev.", "Desconto Promocional",
   "Qtde Itens Ped", "Desp. Acessória", "VDA LIQ", "TT VDA LIQ", "POSIT",
 ] as const;
+
+// Colunas dos templates próprios do sistema (não vêm do ERP) — imports
+// independentes de fornecedores/clientes/metas, aditivos (upsert), sem o
+// delete-and-reinsert que só faz sentido pro DD PEDIDOS (vendas).
+export const FORNECEDOR_COLUMNS = [
+  "Nome Fantasia", "Aliases ERP (separados por ;)", "Ativo",
+] as const;
+
+export const CLIENTE_COLUMNS = [
+  "Cod.Pessoa", "Razão Social", "Fantasia", "CNPJ", "Município", "UF",
+  "Representante", "Status",
+] as const;
+
+export const META_COLUMNS = [
+  "Mês", "Representante", "Fornecedor", "Meta Cx", "Meta Dia Cx", "Meta Fin",
+  "Preço Médio", "Desafio Dist", "Premiação % Cx", "Premiação % Fin",
+] as const;
