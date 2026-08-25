@@ -88,6 +88,27 @@ export async function upsertMeta(payload: {
   revalidatePath("/equipe");
 }
 
+export async function upsertMetasEmLote(payload: {
+  mes: string;
+  representante_id: string;
+  linhas: Array<{
+    fornecedor_id: number;
+    meta_cx: number;
+    meta_dia_cx: number;
+    meta_fin: number;
+    preco_medio: number;
+    desafio_dist: number;
+    premiacao_pct_cx: number;
+    premiacao_pct_fin: number;
+  }>;
+}) {
+  const rows = payload.linhas.map((linha) => ({ mes: payload.mes, representante_id: payload.representante_id, ...linha }));
+  const { error } = await supabaseAdmin.from("metas").upsert(rows, { onConflict: "mes,representante_id,fornecedor_id" });
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/metas");
+  revalidatePath("/equipe");
+}
+
 export async function deleteMeta(mes: string, representante_id: string, fornecedor_id: number) {
   const { error } = await supabaseAdmin
     .from("metas")

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { upsertMeta, upsertMetaRepresentante } from "@/app/admin/actions"
+import { upsertMeta, upsertMetaRepresentante, upsertMetasEmLote } from "@/app/admin/actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,6 +28,12 @@ function mesAtual() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
 }
 
+function mesAnterior(mes: string) {
+  const [ano, m] = mes.split("-").map(Number)
+  const d = new Date(ano, m - 2, 1) // m já é 1-indexed; -2 volta um mês
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`
+}
+
 function emptyLinha(fornecedor_id: number): MetaLinha {
   return { fornecedor_id, meta_cx: 0, meta_dia_cx: 0, meta_fin: 0, preco_medio: 0, desafio_dist: 0, premiacao_pct_cx: 0, premiacao_pct_fin: 0 }
 }
@@ -43,6 +49,8 @@ export default function MetasAdminPage() {
   const [baseAtivaOverride, setBaseAtivaOverride] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<number | null>(null)
+  const [salvandoTudo, setSalvandoTudo] = useState(false)
+  const [copiando, setCopiando] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -99,6 +107,60 @@ export default function MetasAdminPage() {
       toast.error("Erro: " + (err instanceof Error ? err.message : String(err)))
     } finally {
       setSavingId(null)
+    }
+  }
+
+  const copiarMesAnterior = async () => {
+    if (!repId) return
+    setCopiando(true)
+    try {
+      const mesAnt = mesAnterior(mes)
+      const { data: metasAnteriores } = await supabase
+        .from("metas")
+        .select("*")
+        .eq("mes", mesAnt)
+        .eq("representante_id", repId)
+
+      if (!metasAnteriores || metasAnteriores.length === 0) {
+        toast.error(`Sem metas encontradas em ${mesAnt.slice(0, 7)} pra esse representante.`)
+        return
+      }
+
+      setLinhas((prev) => {
+        const novo = { ...prev }
+        for (const m of metasAnteriores) {
+          novo[m.fornecedor_id] = {
+            fornecedor_id: m.fornecedor_id,
+            meta_cx: Number(m.meta_cx),
+            meta_dia_cx: Number(m.meta_dia_cx),
+            meta_fin: Number(m.meta_fin),
+            preco_medio: Number(m.preco_medio),
+            desafio_dist: Number(m.desafio_dist),
+            premiacao_pct_cx: Number(m.premiacao_pct_cx),
+            premiacao_pct_fin: Number(m.premiacao_pct_fin),
+          }
+        }
+        return novo
+      })
+      toast.success(`${metasAnteriores.length} meta(s) copiada(s) de ${mesAnt.slice(0, 7)} — revise e salve.`)
+    } finally {
+      setCopiando(false)
+    }
+  }
+
+  const salvarTudo = async () => {
+    setSalvandoTudo(true)
+    try {
+      await upsertMetasEmLote({
+        mes,
+        representante_id: repId,
+        linhas: fornecedores.map((f) => linhas[f.id] ?? emptyLinha(f.id)),
+      })
+      toast.success("Todas as metas do representante foram salvas!")
+    } catch (err) {
+      toast.error("Erro: " + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setSalvandoTudo(false)
     }
   }
 
@@ -167,6 +229,15 @@ export default function MetasAdminPage() {
           <Button onClick={salvarObjetivos}><Save className="w-4 h-4 mr-1" /> Salvar objetivos</Button>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={copiarMesAnterior} disabled={copiando || !repId}>
+          {copiando ? "Copiando..." : `Copiar metas de ${mesAnterior(mes).slice(0, 7)}`}
+        </Button>
+        <Button onClick={salvarTudo} disabled={salvandoTudo}>
+          <Save className="w-4 h-4 mr-1" /> {salvandoTudo ? "Salvando..." : "Salvar tudo"}
+        </Button>
+      </div>
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
