@@ -3,19 +3,26 @@
 import { useState } from "react";
 import { UploadCloud, FileSpreadsheet, Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
+type PendingConfirmation = {
+  message: string;
+  periodo: { data_inicio: string; data_fim: string; representantes: string[] };
+};
+
 export default function ImportarDadosPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error" | ""; text: string }>({ type: "", text: "" });
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setMessage({ type: "", text: "" });
+      setPendingConfirmation(null);
     }
   };
 
-  const handleUpload = async () => {
+  const doUpload = async (confirm: boolean) => {
     if (!file) return;
 
     setLoading(true);
@@ -23,18 +30,22 @@ export default function ImportarDadosPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    if (confirm) formData.append("confirm", "true");
 
     try {
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/admin/import", {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.status === 409 && data.needsConfirmation) {
+        setPendingConfirmation({ message: data.message, periodo: data.periodo });
+      } else if (response.ok && data.success) {
         setMessage({ type: "success", text: data.message || "Arquivo importado com sucesso!" });
         setFile(null);
+        setPendingConfirmation(null);
       } else {
         setMessage({ type: "error", text: data.error || "Ocorreu um erro ao importar o arquivo." });
       }
@@ -45,6 +56,9 @@ export default function ImportarDadosPage() {
       setLoading(false);
     }
   };
+
+  const handleUpload = () => doUpload(false);
+  const handleConfirm = () => doUpload(true);
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -92,9 +106,34 @@ export default function ImportarDadosPage() {
             </div>
           )}
 
+          {pendingConfirmation && (
+            <div className="flex flex-col gap-3 p-4 rounded-md text-sm bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <div>{pendingConfirmation.message}</div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  className="flex-1 h-9 px-4 rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 font-medium transition-colors"
+                >
+                  {loading ? "Substituindo..." : "Confirmar substituição"}
+                </button>
+                <button
+                  onClick={() => setPendingConfirmation(null)}
+                  disabled={loading}
+                  className="h-9 px-4 rounded-md border border-input hover:bg-accent transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleUpload}
-            disabled={!file || loading}
+            disabled={!file || loading || !!pendingConfirmation}
             className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground h-10 px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 font-medium transition-colors"
           >
             {loading ? (

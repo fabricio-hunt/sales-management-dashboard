@@ -33,7 +33,7 @@ export default function DashboardHub() {
   ];
 
   const interno = [
-    { title: "Atualizar Dados", href: "/admin", icon: Upload, color: "text-slate-500", desc: "Importar novas planilhas" },
+    { title: "Atualizar Dados", href: "/admin/importar", icon: Upload, color: "text-slate-500", desc: "Importar novas planilhas" },
     { title: "Configurações", href: "/configuracoes", icon: Settings, color: "text-slate-500", desc: "Ajustes do sistema" },
   ];
 
