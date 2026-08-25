@@ -18,6 +18,8 @@ import {
   LineChart,
   Menu,
   X,
+  Target,
+  Truck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -40,6 +42,7 @@ export function Sidebar() {
         { href: "/analitico/cliente", label: "Analítico Cliente", icon: PieChart },
         { href: "/analitico/faturamento-dia", label: "Faturamento Diário", icon: TrendingUp },
         { href: "/analitico/devolucoes", label: "Devoluções", icon: Undo2 },
+        { href: "/produtos", label: "Curva ABC de Produtos", icon: BarChart3 },
       ],
     },
     {
@@ -60,6 +63,8 @@ export function Sidebar() {
       title: "Uso Interno",
       links: [
         { href: "/admin/importar", label: "Importar Base", icon: Upload },
+        { href: "/admin/metas", label: "Metas por Fornecedor", icon: Target },
+        { href: "/admin/fornecedores", label: "Fornecedores", icon: Truck },
         { href: "/admin/vendas", label: "Lançar Venda", icon: DollarSign },
         { href: "/admin/clientes", label: "Gestão Clientes", icon: Users },
         { href: "/admin/representantes", label: "Gestão Equipe", icon: Users },
