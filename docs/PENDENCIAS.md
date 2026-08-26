@@ -14,9 +14,10 @@ Documento criado para registrar todos os pontos abertos antes de continuar o des
 > agora só mexe em `origem='erp'`). Conta como positivação automaticamente; preço vem sugerido do último valor
 > vendido daquele produto, editável; vendedor lança só pra si, Manager/Supervisor podem escolher o representante.
 >
-> `supabase_migration_v2.sql` rodado com sucesso em produção nesta sessão (sem erros). **Pendente pra retomar
-> amanhã, em ordem:**
-> 1. Rodar `supabase_migration_v2_1.sql` (dependia do v2, que já passou — agora libera).
+> `supabase_migration_v2.sql` **e** `supabase_migration_v2_1.sql` rodados com sucesso em produção (sem erros).
+> Schema de login/RBAC/comissão/override/lançamento manual está todo aplicado no banco de produção agora.
+> **Pendente pra retomar amanhã, em ordem:**
+> 1. ~~Rodar `supabase_migration_v2_1.sql`~~ — feito.
 > 2. Criar o primeiro Manager (`node scripts/seed_first_manager.mjs <email> <senha> "<nome>"`) contra o Supabase
 >    de produção — confirmar que a `SUPABASE_SERVICE_ROLE_KEY` do `.env.local` local é do mesmo projeto.
 > 3. Logar em produção com essa conta, criar 1 Supervisor + 1 Vendedor de teste em `/admin/usuarios`, atribuir
