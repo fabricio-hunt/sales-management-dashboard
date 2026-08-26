@@ -2,6 +2,34 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 26/08/2026 (v2):** implementado login + controle de acesso (Manager/Supervisor/Vendedor) pedido
+> pelo cliente, fechando o item 2 abaixo em definitivo (login por representante deixou de ser "fica pra depois").
+> Ver `supabase_migration_v2.sql` pro schema completo. Resumo:
+> - **Login/RBAC:** Supabase Auth + `profiles` (papel + `representante_id` pro vendedor) + `supervisor_representantes`
+>   (Manager atribui quais representantes cada supervisor enxerga — não existe agrupamento fixo no ERP) +
+>   `modulos`/`permissoes_role`/`permissoes_usuario` (matriz visualizar/editar, por perfil ou por usuário,
+>   editável em `/admin/permissoes`; usuários geridos em `/admin/usuarios`). Enforced tanto na app
+>   (`src/lib/auth/permissions.ts`, `src/middleware.ts`) quanto via RLS reforçada em `vendas`/`clientes`
+>   (`pode_ver_representante()`, com `security_invoker=true` nas views que dependem delas).
+> - **485 clientes positivados:** o cliente pediu pra considerar 485. Em vez de hardcodar, virou
+>   `metas_representante.positivacao_realizado_override` — mesma convenção de `cadastro_total_override`/
+>   `base_ativa_override` (NULL = cálculo ao vivo, valor setado = referência confirmada), editável em
+>   `/admin/metas` ou em lote via um 5º pipeline de import (`/api/admin/import/metas_representante`). A
+>   divergência 471 vs 485 do representante 90 (achado de 26/08 mais abaixo) segue sem causa raiz confirmada — o
+>   override é a solução de produto, não uma investigação adicional do dado.
+> - **Comissionamento dinâmico:** `comissao_faixas` (faixas de atingimento configuráveis por fornecedor ou
+>   globais, `/admin/comissoes`) finalmente consome `metas.premiacao_pct_cx`/`premiacao_pct_fin` — armazenados
+>   desde a v1 mas nunca usados em nenhum cálculo até agora. Fórmula: realizado × % premiação × fator da faixa.
+>   Resultado em `/comissoes`. **Percentuais/fatores das faixas são placeholder** — ainda precisam ser confirmados
+>   com o cliente (a fórmula exata de "Proporcional 90%"/"Acima de 100%" nunca foi esclarecida, ver item 2 abaixo).
+> - **Top 20 Clientes / Top 10 Vendedores:** `/rankings/clientes` (nova view `vw_top_clientes_mes`) e
+>   `/rankings/vendedores` (mesmo critério de `/rankings/financeiro`, limitado a 10).
+>
+> **Em aberto pra próxima sessão:** rodar `supabase_migration_v2.sql` no Supabase, criar o primeiro Manager
+> (`scripts/seed_first_manager.mjs`), validar o fluxo de login/permissões ponta a ponta num navegador (não foi
+> possível testar interativamente nesta sessão — sem acesso a um projeto Supabase live), e confirmar com o
+> cliente os percentuais reais das faixas de comissão.
+
 > **Atualização 25/08/2026:** rodada de planejamento avançado + implementação da fundação da v1 (schema, import,
 > `/equipe`, telas analíticas/rankings/distribuição, admin de metas/fornecedores). A maioria dos itens abaixo foi
 > resolvida com decisão própria (documentada inline), já que o cliente ainda não tinha dado feedback. Ver
@@ -114,6 +142,10 @@ Cada representante tem sua própria aba na planilha com:
 **Resolvido (25/08):** v1 sem login (uso interno/gestores). `/equipe?rep=308` reaproveita o mesmo componente da
 visão consolidada, filtrado — mesma função das 7 abas individuais. Login por representante fica pra depois do
 feedback do cliente.
+
+**Resolvido (26/08, v2):** cliente pediu login com controle de acesso — implementado. Vendedor loga e só vê a
+própria página (`representante_id` do `profile`, `?rep=` de outro representante é ignorado); Supervisor vê os
+representantes que o Manager atribuir; Manager sem restrição. Ver resumo no topo deste documento.
 
 ---
 

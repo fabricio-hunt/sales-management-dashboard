@@ -8,7 +8,6 @@ import {
   Upload,
   BarChart3,
   Settings,
-  BookOpen,
   PieChart,
   TrendingUp,
   Undo2,
@@ -20,58 +19,92 @@ import {
   X,
   Target,
   Truck,
+  ShieldCheck,
+  UserCog,
+  Percent,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { signOut } from "@/app/login/actions";
+import type { Profile } from "@/lib/auth/session";
+import type { PermissoesResolvidas } from "@/lib/auth/permissions";
 
-export function Sidebar() {
+const ROLE_LABEL: Record<Profile["role"], string> = {
+  manager: "Manager",
+  supervisor: "Supervisor",
+  vendedor: "Vendedor",
+};
+
+export function Sidebar({
+  profile,
+  permissoes,
+}: {
+  profile: Profile;
+  permissoes: PermissoesResolvidas | null; // null = manager, tudo liberado
+}) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
+  // slug = mesmo identificador da coluna modulos.slug/permissoes_role.modulo_slug
+  // (ver supabase_migration_v2.sql) — link só aparece se o usuário tiver ao
+  // menos "visualizar" nesse módulo.
   const menuGroups = [
     {
       title: "Dashboard",
       links: [
-        { href: "/", label: "Resumo Geral", icon: LayoutDashboard },
-        { href: "/equipe", label: "Visão Equipe (RPA)", icon: Users },
+        { href: "/", label: "Resumo Geral", icon: LayoutDashboard, slug: "dashboard" },
+        { href: "/equipe", label: "Visão Equipe (RPA)", icon: Users, slug: "equipe" },
+        { href: "/comissoes", label: "Comissão/Premiação", icon: Percent, slug: "comissoes" },
       ],
     },
     {
       title: "Dados Analíticos",
       links: [
-        { href: "/analitico/vendas", label: "Analítico de Vendas", icon: BarChart3 },
-        { href: "/analitico/cliente", label: "Analítico Cliente", icon: PieChart },
-        { href: "/analitico/faturamento-dia", label: "Faturamento Diário", icon: TrendingUp },
-        { href: "/analitico/devolucoes", label: "Devoluções", icon: Undo2 },
-        { href: "/produtos", label: "Curva ABC de Produtos", icon: BarChart3 },
+        { href: "/analitico/vendas", label: "Analítico de Vendas", icon: BarChart3, slug: "analitico.vendas" },
+        { href: "/analitico/cliente", label: "Analítico Cliente", icon: PieChart, slug: "analitico.cliente" },
+        { href: "/analitico/faturamento-dia", label: "Faturamento Diário", icon: TrendingUp, slug: "analitico.faturamento_dia" },
+        { href: "/analitico/devolucoes", label: "Devoluções", icon: Undo2, slug: "analitico.devolucoes" },
+        { href: "/produtos", label: "Curva ABC de Produtos", icon: BarChart3, slug: "produtos" },
       ],
     },
     {
       title: "Rankings",
       links: [
-        { href: "/rankings/positivacao", label: "Ranking Positivação", icon: Trophy },
-        { href: "/rankings/financeiro", label: "Ranking Financeiro", icon: DollarSign },
+        { href: "/rankings/positivacao", label: "Ranking Positivação", icon: Trophy, slug: "rankings.positivacao" },
+        { href: "/rankings/financeiro", label: "Ranking Financeiro", icon: DollarSign, slug: "rankings.financeiro" },
+        { href: "/rankings/clientes", label: "Top 20 Clientes", icon: Trophy, slug: "rankings.clientes" },
+        { href: "/rankings/vendedores", label: "Top 10 Vendedores", icon: Trophy, slug: "rankings.vendedores" },
       ],
     },
     {
       title: "Distribuição & Evolução",
       links: [
-        { href: "/distribuicao", label: "Resumo Distribuição", icon: Package },
-        { href: "/evolucao", label: "Evolução por Cliente", icon: LineChart },
+        { href: "/distribuicao", label: "Resumo Distribuição", icon: Package, slug: "distribuicao" },
+        { href: "/evolucao", label: "Evolução por Cliente", icon: LineChart, slug: "evolucao" },
       ],
     },
     {
       title: "Uso Interno",
       links: [
-        { href: "/admin/importar", label: "Importar Base", icon: Upload },
-        { href: "/admin/metas", label: "Metas por Fornecedor", icon: Target },
-        { href: "/admin/fornecedores", label: "Fornecedores", icon: Truck },
-        { href: "/admin/vendas", label: "Lançar Venda", icon: DollarSign },
-        { href: "/admin/clientes", label: "Gestão Clientes", icon: Users },
-        { href: "/admin/representantes", label: "Gestão Equipe", icon: Users },
-        { href: "/configuracoes", label: "Configurações", icon: Settings },
+        { href: "/admin/importar", label: "Importar Base", icon: Upload, slug: "admin.importar" },
+        { href: "/admin/metas", label: "Metas por Fornecedor", icon: Target, slug: "admin.metas" },
+        { href: "/admin/comissoes", label: "Faixas de Comissão", icon: Percent, slug: "admin.comissoes" },
+        { href: "/admin/fornecedores", label: "Fornecedores", icon: Truck, slug: "admin.fornecedores" },
+        { href: "/admin/vendas", label: "Lançar Venda", icon: DollarSign, slug: "admin.vendas" },
+        { href: "/admin/clientes", label: "Gestão Clientes", icon: Users, slug: "admin.clientes" },
+        { href: "/admin/representantes", label: "Gestão Equipe", icon: Users, slug: "admin.representantes" },
+        { href: "/admin/usuarios", label: "Usuários", icon: UserCog, slug: "admin.usuarios" },
+        { href: "/admin/permissoes", label: "Permissões", icon: ShieldCheck, slug: "admin.permissoes" },
+        { href: "/configuracoes", label: "Configurações", icon: Settings, slug: "configuracoes" },
       ],
     },
   ];
+
+  const podeVer = (slug: string) => permissoes === null || permissoes[slug] === "visualizar" || permissoes[slug] === "editar";
+
+  const groupsVisiveis = menuGroups
+    .map((group) => ({ ...group, links: group.links.filter((l) => podeVer(l.slug)) }))
+    .filter((group) => group.links.length > 0);
 
   return (
     <>
@@ -93,7 +126,7 @@ export function Sidebar() {
 
       {/* Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
           onClick={() => setIsOpen(false)}
         />
@@ -118,7 +151,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
-          {menuGroups.map((group, index) => (
+          {groupsVisiveis.map((group, index) => (
             <div key={index}>
               <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 {group.title}
@@ -152,13 +185,18 @@ export function Sidebar() {
 
         <div className="p-3 border-t border-border shrink-0">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
-              A
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0">
+              {profile.nome.charAt(0).toUpperCase()}
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Administrador</span>
-              <span className="text-xs text-muted-foreground">Admin</span>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-sm font-medium text-foreground truncate">{profile.nome}</span>
+              <span className="text-xs text-muted-foreground">{ROLE_LABEL[profile.role]}</span>
             </div>
+            <form action={signOut} className="ml-auto">
+              <button type="submit" title="Sair" className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </form>
           </div>
         </div>
       </aside>

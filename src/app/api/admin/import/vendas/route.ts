@@ -3,6 +3,7 @@ import * as xlsx from "xlsx";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { EXPECTED_COLUMNS } from "@/lib/import/expectedColumns";
 import { chunk, toFloat, parseRepresentante, logImport } from "@/lib/import/shared";
+import { requirePermission } from "@/lib/auth/permissions";
 
 // Import do DD PEDIDOS (vendas) — roda 100% em Node/TS, service role key,
 // guardrails de coluna, upsert de dimensões e delete-and-reinsert idempotente
@@ -17,6 +18,7 @@ const CHUNK_SIZE = 500;
 export async function POST(request: NextRequest) {
   let fileName: string | null = null;
   try {
+    await requirePermission("admin.importar", "editar");
     const formData = await request.formData();
     const file = formData.get("file") as unknown as File | null;
     const confirm = formData.get("confirm") === "true";

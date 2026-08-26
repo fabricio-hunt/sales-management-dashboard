@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { META_COLUMNS } from "@/lib/import/expectedColumns";
 import { chunk, toFloat, parseFirstSheetRows, parseRepresentante, logImport } from "@/lib/import/shared";
+import { requirePermission } from "@/lib/auth/permissions";
 
 // Import independente de metas (representante x fornecedor x mês) — aditivo
 // (upsert por mes+representante_id+fornecedor_id). Não apaga metas existentes
@@ -24,6 +25,7 @@ function parseMes(raw: unknown): string | null {
 export async function POST(request: NextRequest) {
   let fileName: string | null = null;
   try {
+    await requirePermission("admin.importar", "editar");
     const formData = await request.formData();
     const file = formData.get("file") as unknown as File | null;
     if (!file) {

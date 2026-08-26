@@ -15,6 +15,16 @@ export function toFloat(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+// Célula em branco = null ("auto"/cálculo ao vivo), nunca 0 — usado nos
+// overrides de metas_representante (cadastro_total_override e afins), onde
+// 0 e "sem override" são coisas diferentes.
+export function toIntOrNull(v: unknown): number | null {
+  const str = String(v ?? "").trim();
+  if (str === "") return null;
+  const n = typeof v === "number" ? v : parseFloat(str.replace(",", "."));
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
 // Extrai o ID numérico do início de um campo "Representante" (ex: "308 - Fulano" -> "308").
 export function parseRepresentante(raw: unknown): { id: string; nome: string } | null {
   const str = String(raw ?? "").trim();
@@ -34,7 +44,7 @@ export function parseFirstSheetRows(buffer: Buffer): Record<string, unknown>[] {
 }
 
 export type LogImportEntry = {
-  tipo: "vendas" | "fornecedores" | "clientes" | "metas";
+  tipo: "vendas" | "fornecedores" | "clientes" | "metas" | "metas_representante";
   arquivo_nome: string | null;
   sucesso: boolean;
   linhas_processadas?: number;

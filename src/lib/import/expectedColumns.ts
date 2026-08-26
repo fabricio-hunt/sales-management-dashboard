@@ -30,3 +30,13 @@ export const META_COLUMNS = [
   "Mês", "Representante", "Fornecedor", "Meta Cx", "Meta Dia Cx", "Meta Fin",
   "Preço Médio", "Desafio Dist", "Premiação % Cx", "Premiação % Fin",
 ] as const;
+
+// Objetivos por representante (não por fornecedor) — inclui o override de
+// "485 clientes positivados" (positivacao_realizado_override), pedido
+// explicitamente pelo cliente pra manter o número alinhado com a operação
+// sem depender de edição manual em /admin/metas. Overrides em branco = "auto"
+// (cálculo ao vivo), não zero — ver src/app/api/admin/import/metas_representante/route.ts.
+export const META_REPRESENTANTE_COLUMNS = [
+  "Mês", "Representante", "Obj. Positivação",
+  "Cadastro Total Override", "Base Ativa Override", "Positivação Realizado Override",
+] as const;

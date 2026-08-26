@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { CLIENTE_COLUMNS } from "@/lib/import/expectedColumns";
 import { chunk, parseFirstSheetRows, parseRepresentante, logImport } from "@/lib/import/shared";
+import { requirePermission } from "@/lib/auth/permissions";
 
 // Import independente de clientes — aditivo (upsert por Cod.Pessoa). Por
 // padrão nunca sobrescreve representante_id/status já atribuídos manualmente
@@ -18,6 +19,7 @@ function normalizaStatus(raw: unknown): "ativo" | "inativo" {
 export async function POST(request: NextRequest) {
   let fileName: string | null = null;
   try {
+    await requirePermission("admin.importar", "editar");
     const formData = await request.formData();
     const file = formData.get("file") as unknown as File | null;
     const forcarOverwrite = formData.get("forcarOverwrite") === "true";

@@ -50,12 +50,24 @@ Run, in order, in the **Supabase SQL Editor**:
 1. `supabase_schema.sql` — base tables.
 2. `supabase_migration_v1.sql` — metas/fornecedores/periodos tables, aggregation views, RLS lockdown, import RPCs.
 3. `supabase_migration_v1_1.sql` — `import_log` table (import history/audit).
+4. `supabase_migration_v2.sql` — login/RBAC (`profiles`, `permissoes_role`/`permissoes_usuario`,
+   `supervisor_representantes`), scoped RLS on `vendas`/`clientes`, positivação override column, commission
+   tiers (`comissao_faixas`), and the `vw_top_clientes_mes` view.
 
 Then seed the current month's goals from the spreadsheet (one-time, idempotent):
 
 ```bash
 node scripts/seed_metas_v1.mjs
 ```
+
+**v2 requires login.** After running `supabase_migration_v2.sql`, create the first Manager user (one-time):
+
+```bash
+node scripts/seed_first_manager.mjs <email> <senha> "<nome>"
+```
+
+Log in at `/login` with that account, then use `/admin/usuarios` to create Supervisors/Vendedores and
+`/admin/permissoes` to adjust what each role/user can see.
 
 ### 5. Run the development server
 
@@ -67,6 +79,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
+- **Login + RBAC:** `/login` (Supabase Auth), three roles (Manager/Supervisor/Vendedor) with a per-module,
+  per-role-or-per-user permission matrix (`/admin/usuarios`, `/admin/permissoes`). Vendedor only ever sees their
+  own `representante_id`'s data (Supervisor sees the representantes the Manager assigns) — enforced both in the
+  app and via RLS on `vendas`/`clientes`.
+- **`/comissoes`, `/admin/comissoes`:** commission/premiação estimate computed from `metas.premiacao_pct_cx`/
+  `premiacao_pct_fin` × configurable atingimento tiers (`comissao_faixas`).
+- **`/rankings/clientes`, `/rankings/vendedores`:** Top 20 Clientes / Top 10 Vendedores.
 - **`/equipe`** (and `/equipe?rep=<id>`): team/rep scorecards — goals, positivação, financeiro — computed live
   from `vendas`, never hardcoded.
 - **`/admin/importar`:** hub of 4 independent imports (Node/TS, `/api/admin/import/{vendas,fornecedores,clientes,metas}`),
