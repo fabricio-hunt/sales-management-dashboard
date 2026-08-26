@@ -101,21 +101,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 src/
+├── middleware.ts              # Session refresh + coarse route gate (redirects to /login)
 ├── app/
-│   ├── page.tsx              # Dashboard hub
-│   ├── equipe/page.tsx       # Team/rep scorecards
-│   ├── admin/actions.ts      # All write Server Actions (service role)
-│   ├── admin/importar/       # Import hub page + ImportHub client component
-│   ├── api/admin/import/     # 4 import endpoints (vendas/fornecedores/clientes/metas)
-│   └── layout.tsx            # Root layout (Sidebar + Toaster)
+│   ├── login/                 # /login — email/senha (Supabase Auth), outside the (app) group
+│   ├── (app)/                 # Everything behind login shares this layout
+│   │   ├── layout.tsx         # Resolves profile + permissions, renders AppShell/Sidebar
+│   │   ├── page.tsx           # Dashboard hub
+│   │   ├── equipe/page.tsx    # Team/rep scorecards (role-scoped repsAlvo)
+│   │   ├── comissoes/page.tsx # Commission/premiação report (role-scoped)
+│   │   ├── rankings/          # positivacao, financeiro, clientes (Top 20), vendedores (Top 10)
+│   │   └── admin/
+│   │       ├── actions.ts               # All write Server Actions (service role, permission-guarded)
+│   │       ├── usuarios/, permissoes/   # Manager-only: create users, edit the permission matrix
+│   │       ├── comissoes/               # Commission tier (comissao_faixas) CRUD
+│   │       └── importar/                # Import hub page + ImportHub client component
+│   └── api/admin/import/      # 5 import endpoints (vendas/fornecedores/clientes/metas/metas_representante)
 ├── components/
-│   └── layout/Sidebar.tsx
+│   └── layout/{Sidebar,AppShell}.tsx   # Sidebar filters links by resolved permissions
 └── lib/
-    ├── supabase.ts           # Anon client (read)
-    ├── supabaseAdmin.ts      # Service role client (server-only writes)
-    └── import/                # expectedColumns.ts + shared.ts (parse/upsert/log helpers)
-supabase_schema.sql          # Base schema
-supabase_migration_v1.sql    # v1 schema/views/RLS/RPCs
-supabase_migration_v1_1.sql  # import_log table
-scripts/seed_metas_v1.mjs    # One-time seed of metas from the spreadsheet
+    ├── supabase.ts             # Legacy anon client (kept only where no session/RLS scoping is needed)
+    ├── supabase/{server,client}.ts  # Session-aware Supabase clients (@supabase/ssr) — use these instead
+    ├── supabaseAdmin.ts        # Service role client (server-only writes)
+    ├── auth/{session,permissions}.ts  # getCurrentProfile, requirePermission/requireRole/requirePageAccess
+    ├── comissao/calcular.ts    # Commission tier calculation (pure function)
+    └── import/                 # expectedColumns.ts + shared.ts (parse/upsert/log helpers)
+supabase_schema.sql            # Base schema
+supabase_migration_v1.sql      # v1 schema/views/RLS/RPCs
+supabase_migration_v1_1.sql    # import_log table
+supabase_migration_v2.sql      # v2: login/RBAC, scoped RLS, positivação override, comissao_faixas, top clientes
+scripts/seed_metas_v1.mjs      # One-time seed of metas from the spreadsheet
+scripts/seed_first_manager.mjs # One-time seed of the first Manager login
 ```
