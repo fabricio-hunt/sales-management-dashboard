@@ -7,6 +7,41 @@ Documento criado para registrar todos os pontos abertos antes de continuar o des
 > resolvida com decisão própria (documentada inline), já que o cliente ainda não tinha dado feedback. Ver
 > `supabase_migration_v1.sql` e `docs/01..05-*.md` atualizados pro estado real do sistema.
 
+## Retomar daqui (sessão de 26/08 pausada aqui)
+
+Sessão de 26/08 rodou migration + reimport real + validação de fornecedores (detalhes abaixo) e parou aqui.
+Próximos passos, em ordem:
+
+1. **[Feito 26/08]** `npm run build` — passou limpo (compilado em 97s, TypeScript ok, 24 rotas geradas, sem erros).
+2. Confirmar com o cliente: (a) a divergência de positivação 471 vs 485 (representante 90, ver achado abaixo),
+   (b) se outros fornecedores além dos 6 já testados também têm `nome_fantasia` trocado no seed inicial — só uma
+   amostra foi validada.
+3. Opcional se sobrar tempo: investigar a divergência pequena em Riclan (caixas) e Chef Clay Leite de Coco (ver
+   detalhes no item 4 da seção "Continuar amanhã" abaixo).
+4. **Infra:** o repositório está em `D:\OneDrive\Documentos\DevRelatorioDeVendas\dashboard` — usuário vai mover
+   pra fora do OneDrive (disco D, fora da sincronização) numa próxima sessão. Isso resolve a lentidão observada
+   hoje (compilação do Turbopack levou ~14min na primeira vez por causa do OneDrive tentando sincronizar
+   `node_modules`/`.next` em tempo real). Depois de mover, reconferir `.env.local`, remote do git e o link do
+   projeto Vercel (pasta `.vercel/`) ainda funcionam a partir do novo caminho.
+
+## Atualização 26/08/2026 — migration rodada, import real feito, achado importante
+
+Migration v1 aplicada por completo (colunas/views/RLS confirmadas programaticamente). Reimportado o `DD PEDIDOS`
+real de agosto/2026 via `/api/admin/import/vendas`: 7443 vendas gravadas (de 52062 linhas nominais da aba, sendo
+44619 linhas em branco/padding do Excel — não é bug, é range inflado da planilha).
+
+**A validação da positivação (item 1) reabriu**: com dado real, `/equipe` calcula **471**, não 485. Comparando
+`RESUMO POSITIVAÇÃO`/`RESUMO DISTRIBUIÇÃO` (485) vs `ATUALIZA POSITIVAÇÃO` (471) vs banco: todos os 7
+representantes batem exatamente entre `ATUALIZA POSITIVAÇÃO` e o banco, **exceto o representante 90** — `RESUMO`
+mostra Realizado=24, mas o pivot bruto e o banco mostram 10 (diferença de 14 = exatamente 485-471). Dois sinais de
+que o 24 é que está errado, não o 10: (a) a linha do rep. 90 em `RESUMO POSITIVAÇÃO`/`DISTRIBUIÇÃO` tem Meta=0,
+única entre os 7; (b) `RESUMO POSITIVAÇÃO` e `RESUMO DISTRIBUIÇÃO` têm exatamente os mesmos valores de "Realizado"
+linha a linha — não são duas fontes independentes como a decisão de 25/08 assumiu, então a "validação cruzada"
+que justificou escolher 485 não validava nada de fato. **Decisão de 25/08 revertida** — precisa confirmar com o
+cliente por que o rep. 90 tem meta zerada e um Realizado que não bate com o `DD PEDIDOS` bruto, antes de fechar
+esse número em definitivo. Até lá, o sistema segue calculando ao vivo (471 com o dado atual), o que é o
+comportamento correto independente de qual número for confirmado depois.
+
 ## Continuar amanhã (a partir de 26/08/2026)
 
 Sessão de 25/08 também generalizou a importação em 4 pipelines independentes (`docs/03-importacao-excel.md`) e
@@ -23,12 +58,27 @@ em código, outro ainda pendente de ação no Supabase:
    existem** — confirmado programaticamente (anon key ainda escreve direto nessas tabelas). O arquivo já foi
    editado pra ser 100% re-executável (`DROP POLICY IF EXISTS` antes de cada política) — falta só o usuário rodar
    o arquivo inteiro de novo no SQL Editor.
-3. **Depois do passo 2:** reimportar o `DD PEDIDOS` de agosto/2026 via `/admin/importar` (endpoint
-   `/api/admin/import/vendas`) e confirmar que `/equipe` mostra positivação = 485 (não 533), batendo com
-   `RESUMO POSITIVAÇÃO`/`RESUMO DISTRIBUIÇÃO` da planilha.
-4. Comparar pelo menos 2 fornecedores (ex: Chef Clay, Riclan) entre `/equipe` e a aba `Equipe` da planilha,
-   célula a célula — verificação que ainda não foi feita com dado real.
-5. Depois de validado: considerar rodar `npm run build` + revisão final antes de mostrar a v1 pro cliente.
+3. **[Feito 26/08]** Reimportado o `DD PEDIDOS` de agosto/2026. Positivação deu 471, não 485 — ver achado no topo
+   deste documento, pendente de confirmação do cliente.
+4. **[Feito 26/08]** Comparados Chef Clay, Chef Clay Molhos, Chef Clay Granola, Tapioca Chef Clay, Chef Clay Leite
+   de Coco e Riclan entre `/equipe` e a aba `Equipe` da planilha, célula a célula. Achado real: **`fornecedores`
+   id=1 e id=3 estavam com `nome_fantasia` trocado** desde o seed inicial (id=1 = GN Distribuidora de Alimentos
+   Ltda, deveria ser "Chef Clay Molhos" e estava rotulado "Chef Clay"; id=3 = Algo Mais Temperos Eireli, o
+   inverso) — confirmado com 3 métricas batendo exatamente ao trocar (financeiro ao centavo, distribuição,
+   produtos por descrição). **Corrigido diretamente no Supabase** (`UPDATE fornecedores SET nome_fantasia ...`
+   via troca com valor temporário, nenhuma migration nova necessária). Depois da correção:
+   - Chef Clay: financeiro e distribuição batem exatos; caixas 231.75 vs 230.75 da planilha (diff de 1, minor).
+   - Chef Clay Molhos: tudo bate exato (caixas, financeiro, distribuição).
+   - Tapioca Chef Clay: tudo bate exato.
+   - Riclan: financeiro e distribuição batem exatos; caixas 1116.41 vs 1110.84 da planilha (diff ~5.6, minor,
+     não investigado a fundo — possível diferença de conversão de kit/unidade).
+   - Chef Clay Granola: sem vendas no período nos dois lados (0), não deu pra validar distribuição (planilha
+     mostra 56 mesmo com Realizado=0 — provavelmente outra métrica, tipo cadastro, não vendas).
+   - Chef Clay Leite de Coco: pequena divergência não resolvida (caixas 46 vs 44.5, financeiro 2576.23 vs
+     2438.08, distribuição 35 vs 33) — vale investigar se sobrar tempo, não é bloqueante.
+5. **Próximo passo:** rodar `npm run build` + revisão final antes de mostrar a v1 pro cliente. Também vale
+   verificar se outros fornecedores (fora dos 6 testados) têm o mesmo tipo de troca de rótulo — só testamos uma
+   amostra.
 
 ---
 
