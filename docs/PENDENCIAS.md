@@ -2,6 +2,35 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 26/08/2026 (v2 — deploy):** commit/push feito, deploy automático na Vercel confirmado em produção
+> (`sales-management-dashboard-gules.vercel.app`). Corrigido um bloqueio real encontrado nessa checagem:
+> `SUPABASE_SERVICE_ROLE_KEY` não existia nas Environment Variables da Vercel — sem ela nenhuma Server
+> Action/import grava em produção (isso valia desde a v1, não é coisa nova da v2). Variável adicionada +
+> redeploy manual disparado (adicionar uma env var sozinha não atualiza um deployment já publicado).
+>
+> Também entrou o **lançamento manual de vendas** (`/admin/vendas`), pedido do cliente pro vendedor "lançar e
+> acompanhar vendas" sem depender do import mensal: grava direto em `vendas` com `origem='manual'`
+> (`supabase_migration_v2_1.sql`), pra não ser apagado no próximo reimport do DD PEDIDOS (`apagar_vendas_periodo`
+> agora só mexe em `origem='erp'`). Conta como positivação automaticamente; preço vem sugerido do último valor
+> vendido daquele produto, editável; vendedor lança só pra si, Manager/Supervisor podem escolher o representante.
+>
+> `supabase_migration_v2.sql` rodado com sucesso em produção nesta sessão (sem erros). **Pendente pra retomar
+> amanhã, em ordem:**
+> 1. Rodar `supabase_migration_v2_1.sql` (dependia do v2, que já passou — agora libera).
+> 2. Criar o primeiro Manager (`node scripts/seed_first_manager.mjs <email> <senha> "<nome>"`) contra o Supabase
+>    de produção — confirmar que a `SUPABASE_SERVICE_ROLE_KEY` do `.env.local` local é do mesmo projeto.
+> 3. Logar em produção com essa conta, criar 1 Supervisor + 1 Vendedor de teste em `/admin/usuarios`, atribuir
+>    representante ao vendedor.
+> 4. Validar em navegador anônimo que o Vendedor só vê a própria página em `/equipe` e nada de "Uso Interno".
+> 5. Lançar uma venda de teste em `/admin/vendas` e confirmar que reflete em `/equipe`/rankings.
+> 6. Ajustar `/admin/permissoes` se quiser liberar mais telas por padrão pro Supervisor/Vendedor além do default
+>    conservador (hoje: dashboard/equipe/comissões pro vendedor, +analítico/rankings/distribuição pro supervisor).
+> 7. Confirmar com o cliente os percentuais reais das faixas de comissão (`/admin/comissoes`, hoje placeholder).
+> 8. Decidir a divergência 471 vs 485 do representante 90 (usar o override em `/admin/metas` se for fixar 485).
+> 9. Rodar `npm audit` e revisar a vulnerabilidade "high severity" acusada no install antes de abrir pra usuários
+>    reais.
+> 10. Definir como cada vendedor real vai receber a própria senha inicial de login.
+
 > **Atualização 26/08/2026 (v2):** implementado login + controle de acesso (Manager/Supervisor/Vendedor) pedido
 > pelo cliente, fechando o item 2 abaixo em definitivo (login por representante deixou de ser "fica pra depois").
 > Ver `supabase_migration_v2.sql` pro schema completo. Resumo:
