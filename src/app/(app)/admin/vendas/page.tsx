@@ -1,17 +1,39 @@
-import { PageHeader } from "@/components/layout/PageHeader";
 import { requirePageAccess } from "@/lib/auth/permissions";
+import { representantesEscopo } from "@/lib/auth/session";
+import { createServerSupabase } from "@/lib/supabase/server";
+import VendasClient from "./VendasClient";
 
-export default async function LançarVendasPage() {
-  await requirePageAccess("admin.vendas");
+export const revalidate = 0;
+
+export default async function Page() {
+  const profile = await requirePageAccess("admin.vendas");
+  const supabase = await createServerSupabase();
+  const escopo = await representantesEscopo(profile);
+
+  const [{ data: representantesTodos }, { data: clientes }, { data: produtos }, { data: lancamentos }] = await Promise.all([
+    supabase.from("representantes").select("id, nome").order("id"),
+    // RLS já escopa clientes por representante — vendedor só recebe a própria carteira.
+    supabase.from("clientes").select("id, razao_social, fantasia, representante_id").eq("status", "ativo").order("fantasia"),
+    supabase.from("produtos").select("id, descricao").order("descricao").limit(3000),
+    // RLS já escopa vendas — cada um só vê os próprios lançamentos manuais (ou os do escopo, pro manager/supervisor).
+    supabase
+      .from("vendas")
+      .select("pedido_nr, data_venda, cliente_id, representante_id, produto_id, qtde, venda_liq, created_at")
+      .eq("origem", "manual")
+      .order("created_at", { ascending: false })
+      .limit(200),
+  ]);
+
+  const representantes =
+    escopo === "todos" ? (representantesTodos ?? []) : (representantesTodos ?? []).filter((r) => escopo.includes(r.id));
+
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <PageHeader
-        title="Lançamento de Vendas"
-        subtitle="Cadastre vendas avulsas manualmente sem depender do envio de planilhas."
-      />
-      <div className="border border-border rounded-xl p-6 bg-card text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Módulo em construção (Formulário de Lançamento Avulso)</p>
-      </div>
-    </div>
+    <VendasClient
+      profile={{ id: profile.id, nome: profile.nome, role: profile.role, representante_id: profile.representante_id }}
+      representantes={representantes}
+      clientes={clientes ?? []}
+      produtos={produtos ?? []}
+      lancamentosIniciais={lancamentos ?? []}
+    />
   );
 }

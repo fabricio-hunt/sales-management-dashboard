@@ -53,6 +53,7 @@ export function Sidebar({
       title: "Dashboard",
       links: [
         { href: "/", label: "Resumo Geral", icon: LayoutDashboard, slug: "dashboard" },
+        { href: "/admin/vendas", label: "Lançar Venda", icon: DollarSign, slug: "admin.vendas" },
         { href: "/equipe", label: "Visão Equipe (RPA)", icon: Users, slug: "equipe" },
         { href: "/comissoes", label: "Comissão/Premiação", icon: Percent, slug: "comissoes" },
       ],
@@ -90,7 +91,6 @@ export function Sidebar({
         { href: "/admin/metas", label: "Metas por Fornecedor", icon: Target, slug: "admin.metas" },
         { href: "/admin/comissoes", label: "Faixas de Comissão", icon: Percent, slug: "admin.comissoes" },
         { href: "/admin/fornecedores", label: "Fornecedores", icon: Truck, slug: "admin.fornecedores" },
-        { href: "/admin/vendas", label: "Lançar Venda", icon: DollarSign, slug: "admin.vendas" },
         { href: "/admin/clientes", label: "Gestão Clientes", icon: Users, slug: "admin.clientes" },
         { href: "/admin/representantes", label: "Gestão Equipe", icon: Users, slug: "admin.representantes" },
         { href: "/admin/usuarios", label: "Usuários", icon: UserCog, slug: "admin.usuarios" },

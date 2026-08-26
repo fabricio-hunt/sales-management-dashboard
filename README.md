@@ -53,6 +53,9 @@ Run, in order, in the **Supabase SQL Editor**:
 4. `supabase_migration_v2.sql` — login/RBAC (`profiles`, `permissoes_role`/`permissoes_usuario`,
    `supervisor_representantes`), scoped RLS on `vendas`/`clientes`, positivação override column, commission
    tiers (`comissao_faixas`), and the `vw_top_clientes_mes` view.
+5. `supabase_migration_v2_1.sql` — `vendas.origem` (`erp`/`manual`, protects manual entries from the monthly
+   reimport's delete-and-reinsert), the manual pedido number generator, and grants Vendedor edit access to
+   `/admin/vendas`.
 
 Then seed the current month's goals from the spreadsheet (one-time, idempotent):
 
@@ -86,6 +89,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - **`/comissoes`, `/admin/comissoes`:** commission/premiação estimate computed from `metas.premiacao_pct_cx`/
   `premiacao_pct_fin` × configurable atingimento tiers (`comissao_faixas`).
 - **`/rankings/clientes`, `/rankings/vendedores`:** Top 20 Clientes / Top 10 Vendedores.
+- **`/admin/vendas`:** manual sale entry (Vendedor for their own carteira; Manager/Supervisor can pick any
+  representante in scope). Writes straight into `vendas` with `origem='manual'`, counts as positivação
+  automatically, and is immune to the monthly ERP reimport (which only ever touches `origem='erp'` rows).
 - **`/equipe`** (and `/equipe?rep=<id>`): team/rep scorecards — goals, positivação, financeiro — computed live
   from `vendas`, never hardcoded.
 - **`/admin/importar`:** hub of 4 independent imports (Node/TS, `/api/admin/import/{vendas,fornecedores,clientes,metas}`),
