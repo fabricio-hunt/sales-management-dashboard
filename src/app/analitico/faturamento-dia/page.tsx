@@ -1,6 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { KpiGrid } from "@/components/data-display/KpiGrid";
+import { KpiCard } from "@/components/data-display/KpiCard";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { TrendLineChart } from "@/components/charts/TrendLineChart";
 
 export const revalidate = 0;
 
@@ -8,6 +12,14 @@ function mesAtual() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
+
+const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+const fmtCurShort = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact" }).format(v);
+const fmtDiaCurto = (data: string) => {
+  const [, m, d] = data.split("-");
+  return `${d}/${m}`;
+};
 
 export default async function FaturamentoDiaPage() {
   const mes = mesAtual();
@@ -21,9 +33,9 @@ export default async function FaturamentoDiaPage() {
         .lte("data_venda", periodo.data_fim)
     : { data: [] as { data_venda: string; venda_liq: number; venda_bruta: number; devolucao: number; clientes_atendidos: number }[] };
 
-  const porDia = new Map<string, { venda_liq: number; venda_bruta: number; devolucao: number; clientes: Set<number> }>();
+  const porDia = new Map<string, { venda_liq: number; venda_bruta: number; devolucao: number }>();
   for (const r of rows ?? []) {
-    const acc = porDia.get(r.data_venda) ?? { venda_liq: 0, venda_bruta: 0, devolucao: 0, clientes: new Set() };
+    const acc = porDia.get(r.data_venda) ?? { venda_liq: 0, venda_bruta: 0, devolucao: 0 };
     acc.venda_liq += Number(r.venda_liq);
     acc.venda_bruta += Number(r.venda_bruta);
     acc.devolucao += Number(r.devolucao);
@@ -31,37 +43,68 @@ export default async function FaturamentoDiaPage() {
   }
 
   const dias = [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b));
-  const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-  const maxVenda = Math.max(1, ...dias.map(([, v]) => v.venda_liq));
+  const totalMes = dias.reduce((s, [, v]) => s + v.venda_liq, 0);
+  const mediaDia = dias.length > 0 ? totalMes / dias.length : 0;
+  const melhorDia = dias.reduce<{ data: string; venda_liq: number } | null>((best, [data, v]) => {
+    if (!best || v.venda_liq > best.venda_liq) return { data, venda_liq: v.venda_liq };
+    return best;
+  }, null);
+
+  const chartData = dias.map(([data, v]) => ({ label: fmtDiaCurto(data), value: v.venda_liq }));
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <TrendingUp className="w-7 h-7 text-violet-400" />
-          Faturamento Diário
-        </h1>
-        <p className="text-slate-400 mt-1">Venda líquida por dia — {mes.slice(0, 7)}</p>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-6 p-6">
+      <PageHeader title="Faturamento Diário" subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Evolução no mês</CardTitle>
-          <CardDescription>{dias.length} dia(s) com venda registrada.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-1.5">
-          {dias.length === 0 && <p className="text-center py-8 text-slate-400">Sem vendas no período.</p>}
-          {dias.map(([data, v]) => (
-            <div key={data} className="flex items-center gap-3 text-sm">
-              <span className="w-24 text-slate-500 font-mono shrink-0">{data}</span>
-              <div className="flex-1 h-6 bg-slate-100 rounded overflow-hidden">
-                <div className="h-full bg-blue-500 rounded" style={{ width: `${(v.venda_liq / maxVenda) * 100}%` }} />
-              </div>
-              <span className="w-32 text-right font-mono font-semibold shrink-0">{fmtCur(v.venda_liq)}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <KpiGrid>
+        <KpiCard label="Total do mês" value={fmtCurShort(totalMes)} hint={fmtCur(totalMes)} />
+        <KpiCard label="Média por dia" value={fmtCurShort(mediaDia)} />
+        <KpiCard
+          label="Melhor dia"
+          value={melhorDia ? fmtCurShort(melhorDia.venda_liq) : "-"}
+          hint={melhorDia ? fmtDiaCurto(melhorDia.data) : undefined}
+        />
+        <KpiCard label="Dias com venda" value={dias.length} />
+      </KpiGrid>
+
+      <ChartCard title="Evolução no mês" subtitle={`${dias.length} dia(s) com venda registrada.`} isEmpty={dias.length === 0}>
+        <TrendLineChart data={chartData} format="currency-compact" />
+      </ChartCard>
+
+      <div className="rounded-xl border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="border-b border-border px-5 py-3">
+          <h3 className="text-base font-medium text-foreground">Detalhe por dia</h3>
+        </div>
+        <div className="max-h-[420px] overflow-y-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-card">
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Venda Bruta</TableHead>
+                <TableHead className="text-right">Devolução</TableHead>
+                <TableHead className="text-right">Venda Líquida</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dias.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                    Sem vendas no período.
+                  </TableCell>
+                </TableRow>
+              )}
+              {dias.map(([data, v]) => (
+                <TableRow key={data}>
+                  <TableCell className="font-mono text-xs">{data}</TableCell>
+                  <TableCell className="text-right font-mono text-muted-foreground">{fmtCur(v.venda_bruta)}</TableCell>
+                  <TableCell className="text-right font-mono text-negative">{v.devolucao > 0 ? fmtCur(v.devolucao) : "-"}</TableCell>
+                  <TableCell className="text-right font-mono font-medium">{fmtCur(v.venda_liq)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

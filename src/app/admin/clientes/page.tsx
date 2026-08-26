@@ -16,7 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Pencil, Trash2, Plus, X, Search, UserCircle, Save } from "lucide-react"
+import { Pencil, Trash2, Plus, X, Search, Save } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 type Cliente = {
   id: string
@@ -160,15 +161,10 @@ export default function ClientesAdminPage() {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <div className="flex flex-col gap-2 border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <UserCircle className="w-8 h-8 text-blue-600" />
-          Gestão de Clientes
-        </h1>
-        <p className="text-muted-foreground">
-          Adicione, edite ou remova clientes manualmente. Representante/status atribuídos aqui não são sobrescritos pela importação.
-        </p>
-      </div>
+      <PageHeader
+        title="Gestão de Clientes"
+        subtitle="Adicione, edite ou remova clientes manualmente. Representante/status atribuídos aqui não são sobrescritos pela importação."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -268,10 +264,10 @@ export default function ClientesAdminPage() {
 
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center relative">
-            <Search className="w-5 h-5 absolute left-3 text-slate-400" />
+            <Search className="w-5 h-5 absolute left-3 text-muted-foreground" />
             <Input
               placeholder="Buscar por ID, Razão Social ou Fantasia..."
-              className="pl-10 h-12 text-md bg-white"
+              className="pl-10 h-12 text-md bg-card"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -280,7 +276,7 @@ export default function ClientesAdminPage() {
           <Card className="overflow-hidden">
             <div className="overflow-x-auto max-h-[700px]">
               <Table>
-                <TableHeader className="bg-slate-50 sticky top-0 shadow-sm z-10">
+                <TableHeader className="bg-muted/40 sticky top-0 shadow-sm z-10">
                   <TableRow>
                     <TableHead className="w-24">ID</TableHead>
                     <TableHead>Razão Social / Fantasia</TableHead>
@@ -292,28 +288,28 @@ export default function ClientesAdminPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-slate-500">Carregando clientes...</TableCell>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Carregando clientes...</TableCell>
                     </TableRow>
                   ) : filteredClientes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-slate-500">Nenhum cliente encontrado.</TableCell>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Nenhum cliente encontrado.</TableCell>
                     </TableRow>
                   ) : (
                     filteredClientes.map((cliente) => (
-                      <TableRow key={cliente.id} className="hover:bg-slate-50">
+                      <TableRow key={cliente.id} className="hover:bg-muted/40">
                         <TableCell className="font-mono font-medium">{cliente.id}</TableCell>
                         <TableCell>
-                          <div className="font-semibold text-slate-800">{cliente.razao_social || "Sem Razão Social"}</div>
-                          <div className="text-sm text-slate-500">{cliente.fantasia || "Sem Fantasia"}</div>
-                          <div className="text-xs text-slate-400 mt-1">{cliente.cnpj}</div>
+                          <div className="font-semibold text-foreground">{cliente.razao_social || "Sem Razão Social"}</div>
+                          <div className="text-sm text-muted-foreground">{cliente.fantasia || "Sem Fantasia"}</div>
+                          <div className="text-xs text-muted-foreground/70 mt-1">{cliente.cnpj}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">{cliente.municipio || "-"}</div>
-                          <div className="text-xs font-semibold text-slate-500">{cliente.uf || "-"}</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{cliente.uf || "-"}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">{cliente.representante_id || "-"}</div>
-                          <div className={`text-xs font-semibold ${cliente.status === "ativo" ? "text-emerald-600" : "text-rose-500"}`}>
+                          <div className={`text-xs font-semibold ${cliente.status === "ativo" ? "text-positive" : "text-negative"}`}>
                             {cliente.status === "ativo" ? "Ativo" : "Inativo"}
                           </div>
                         </TableCell>

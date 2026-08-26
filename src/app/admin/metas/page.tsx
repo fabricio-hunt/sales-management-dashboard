@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Target, Save } from "lucide-react"
+import { Save } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 type Fornecedor = { id: number; nome_fantasia: string }
 type Representante = { id: string; nome: string }
@@ -181,15 +182,10 @@ export default function MetasAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1300px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-2 border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Target className="w-8 h-8 text-blue-600" />
-          Metas por Representante × Fornecedor
-        </h1>
-        <p className="text-muted-foreground">
-          Substitui os hardcodes de metas — edite mês a mês sem precisar de redeploy.
-        </p>
-      </div>
+      <PageHeader
+        title="Metas por Representante × Fornecedor"
+        subtitle="Substitui os hardcodes de metas — edite mês a mês sem precisar de redeploy."
+      />
 
       <div className="flex flex-wrap gap-4 items-end">
         <div className="space-y-1.5">
@@ -242,7 +238,7 @@ export default function MetasAdminPage() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
+            <thead className="bg-muted/40 border-b border-border">
               <tr>
                 <th className="px-3 py-2 text-left">Fornecedor</th>
                 <th className="px-2 py-2 text-right">Meta Cx</th>
@@ -257,13 +253,13 @@ export default function MetasAdminPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="text-center py-8 text-slate-400">Carregando...</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-muted-foreground">Carregando...</td></tr>
               ) : (
                 fornecedores.map((f) => {
                   const linha = linhas[f.id] ?? emptyLinha(f.id)
                   return (
-                    <tr key={f.id} className="border-b hover:bg-slate-50">
-                      <td className="px-3 py-1.5 font-medium text-slate-800">{f.nome_fantasia}</td>
+                    <tr key={f.id} className="border-b border-border hover:bg-muted/40">
+                      <td className="px-3 py-1.5 font-medium text-foreground">{f.nome_fantasia}</td>
                       {(["meta_cx", "meta_dia_cx", "meta_fin", "preco_medio", "desafio_dist", "premiacao_pct_cx", "premiacao_pct_fin"] as const).map((field) => (
                         <td key={field} className="px-1 py-1">
                           <input
@@ -271,7 +267,7 @@ export default function MetasAdminPage() {
                             step="any"
                             value={linha[field]}
                             onChange={(e) => updateLinha(f.id, field, Number(e.target.value))}
-                            className="w-full h-8 text-right text-xs px-2 rounded border border-slate-200 font-mono"
+                            className="w-full h-8 text-right text-xs px-2 rounded border border-border font-mono"
                           />
                         </td>
                       ))}

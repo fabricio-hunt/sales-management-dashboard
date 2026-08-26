@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Pencil, Trash2, Plus, X, Users, Save } from "lucide-react"
+import { Pencil, Trash2, Plus, X, Save } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 type Representante = { id: string; nome: string; supervisor: string | null }
 
@@ -77,15 +78,10 @@ export default function RepresentantesAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1000px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-2 border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Users className="w-8 h-8 text-blue-600" />
-          Gestão de Representantes (RPA)
-        </h1>
-        <p className="text-muted-foreground">
-          O ID deve bater com o código usado na coluna &quot;Representante&quot; do ERP (ex: 308).
-        </p>
-      </div>
+      <PageHeader
+        title="Gestão de Representantes (RPA)"
+        subtitle='O ID deve bater com o código usado na coluna "Representante" do ERP (ex: 308).'
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
@@ -129,7 +125,7 @@ export default function RepresentantesAdminPage() {
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <Table>
-              <TableHeader className="bg-slate-50">
+              <TableHeader className="bg-muted/40">
                 <TableRow>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead>Nome</TableHead>
@@ -139,15 +135,15 @@ export default function RepresentantesAdminPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={4} className="h-24 text-center text-slate-500">Carregando...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : reps.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="h-24 text-center text-slate-500">Nenhum representante cadastrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Nenhum representante cadastrado.</TableCell></TableRow>
                 ) : (
                   reps.map((rep) => (
-                    <TableRow key={rep.id} className="hover:bg-slate-50">
+                    <TableRow key={rep.id} className="hover:bg-muted/40">
                       <TableCell className="font-mono font-medium">{rep.id}</TableCell>
-                      <TableCell className="font-semibold text-slate-800">{rep.nome}</TableCell>
-                      <TableCell className="text-slate-500">{rep.supervisor || "-"}</TableCell>
+                      <TableCell className="font-semibold text-foreground">{rep.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">{rep.supervisor || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(rep)} className="text-blue-600 hover:bg-blue-50">

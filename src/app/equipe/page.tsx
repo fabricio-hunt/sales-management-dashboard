@@ -1,6 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { KpiGrid } from "@/components/data-display/KpiGrid";
+import { KpiCard } from "@/components/data-display/KpiCard";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { TrendLineChart } from "@/components/charts/TrendLineChart";
 
 export const revalidate = 0;
 
@@ -36,6 +41,10 @@ function fornecedorNome(f: MetaRow["fornecedores"]): string {
 
 const fmtPct = (v: number) => `${v.toFixed(2)}%`;
 const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+const fmtDiaCurto = (data: string) => {
+  const [, m, d] = data.split("-");
+  return `${d}/${m}`;
+};
 const fmtNum2 = (v: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
 const fmtNum0 = (v: number) => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(v);
 
@@ -73,7 +82,7 @@ export default async function EquipePage({
 
   const { data: metasRepRows } = await supabase
     .from("metas_representante")
-    .select("*, representantes(nome)")
+    .select("*")
     .eq("mes", mes);
 
   const repsEquipe = (metasRepRows ?? []).map((r) => r.representante_id);
@@ -115,6 +124,14 @@ export default async function EquipePage({
   const pctIdeal = periodo.dias_uteis > 0 ? (diasFaturado / periodo.dias_uteis) * 100 : 0;
 
   const receitaTotalGlobal = (faturamentoDiario ?? []).reduce((s, r) => s + Number(r.venda_liq), 0);
+
+  const receitaPorDia = new Map<string, number>();
+  for (const r of faturamentoDiario ?? []) {
+    receitaPorDia.set(r.data_venda, (receitaPorDia.get(r.data_venda) ?? 0) + Number(r.venda_liq));
+  }
+  const chartData = [...receitaPorDia.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([data, valor]) => ({ label: fmtDiaCurto(data), value: valor }));
 
   // ─── Positivação/cadastro/base ativa: metas_representante + clientes (override manual disponível) ───
   const metasRepAlvo = (metasRepRows ?? []).filter((r) => repsAlvo.includes(r.representante_id));
@@ -208,57 +225,54 @@ export default async function EquipePage({
   return (
     <div className="p-4 md:p-6 max-w-[1700px] mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {repFiltro && (
-        <Link href="/equipe" className="text-sm text-blue-600 hover:underline">
-          &larr; Voltar pra visão consolidada da equipe
-        </Link>
-      )}
+      <PageHeader
+        title={regiaoLabel}
+        subtitle={`Período: ${periodo.data_inicio} a ${periodo.data_fim}`}
+        backHref={repFiltro ? "/equipe" : undefined}
+        backLabel="Voltar pra visão consolidada da equipe"
+      />
 
-      {/* ─── HEADER ─── */}
-      <div className="bg-slate-900 text-white rounded-xl shadow-lg overflow-hidden">
-        <div className="flex flex-col md:flex-row items-stretch">
-          <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-700">
-            <div className="text-2xl font-black text-white tracking-tight">{regiaoLabel}</div>
-            <div className="text-slate-400 text-sm mt-1">
-              Período: {periodo.data_inicio} a {periodo.data_fim}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-slate-700 border-t md:border-t-0 border-slate-700 flex-1">
-            {[
-              { label: "Dias Úteis", value: periodo.dias_uteis, color: "text-white" },
-              { label: "Dias Faturado", value: diasFaturado, color: "text-blue-400" },
-              { label: "Dias Restam", value: diasRestam, color: "text-amber-400" },
-              { label: "% Ideal", value: fmtPct(pctIdeal), color: "text-emerald-400" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="px-4 py-4 md:px-6 md:py-5 text-center flex flex-col justify-center">
-                <p className="text-slate-400 uppercase font-semibold text-[10px] tracking-wider mb-1">{label}</p>
-                <p className={`text-2xl md:text-3xl font-black ${color}`}>{value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ─── KPIs ─── */}
+      <KpiGrid>
+        <KpiCard label="Dias Úteis" value={periodo.dias_uteis} />
+        <KpiCard label="Dias Faturado" value={diasFaturado} />
+        <KpiCard label="Dias Restam" value={diasRestam} />
+        <KpiCard
+          label="% Ideal"
+          value={fmtPct(pctIdeal)}
+          delta={{ value: pctIdeal, direction: pctIdeal >= 100 ? "up" : "down" }}
+        />
+      </KpiGrid>
+
+      {/* ─── TENDÊNCIA DE FATURAMENTO ─── */}
+      <ChartCard
+        title="Faturamento diário da equipe"
+        subtitle={`Receita líquida acumulada por dia — ${fmtCur(receitaTotalGlobal)} no mês`}
+        isEmpty={chartData.length === 0}
+      >
+        <TrendLineChart data={chartData} format="currency-compact" />
+      </ChartCard>
 
       {/* ─── SCORECARDS ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <Card className="overflow-hidden border-0 shadow-md">
-          <div className="bg-slate-800 px-4 py-2">
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Positivação de Clientes</p>
+        <Card className="overflow-hidden border-border shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+          <div className="border-b border-border bg-muted/40 px-4 py-2.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Positivação de Clientes</p>
           </div>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
-                  { label: "Cadastro Total", value: fmtNum0(cadastroTotal), color: "text-slate-900", bg: "" },
-                  { label: "Base Ativa", value: fmtNum0(baseAtiva), color: "text-slate-900", bg: "" },
+                  { label: "Cadastro Total", value: fmtNum0(cadastroTotal), color: "text-foreground", bg: "" },
+                  { label: "Base Ativa", value: fmtNum0(baseAtiva), color: "text-foreground", bg: "" },
                   { label: "Obj. Positivação", value: fmtNum0(objPositivacao), color: "text-amber-600", bg: "bg-amber-50" },
-                  { label: "Realizado Mês", value: fmtNum0(positivadosCount), color: "text-slate-900", bg: "" },
+                  { label: "Realizado Mês", value: fmtNum0(positivadosCount), color: "text-foreground", bg: "" },
                   { label: "Falta Positivar", value: fmtNum0(faltaPositivar), color: "text-rose-600 font-bold", bg: "bg-yellow-50" },
                   { label: "% Realizado", value: fmtPct(pctPositivacaoRealizado), color: pctPositivacaoRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
                 ].map(({ label, value, color, bg }) => (
-                  <tr key={label} className={`border-b hover:bg-slate-50 ${bg}`}>
-                    <td className="px-4 py-2.5 text-slate-600 font-medium">{label}</td>
+                  <tr key={label} className={`border-b border-border hover:bg-muted/40 ${bg}`}>
+                    <td className="px-4 py-2.5 text-muted-foreground font-medium">{label}</td>
                     <td className={`px-4 py-2.5 text-right font-mono ${color}`}>{value}</td>
                   </tr>
                 ))}
@@ -267,23 +281,23 @@ export default async function EquipePage({
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-0 shadow-md">
-          <div className="bg-slate-800 px-4 py-2">
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-wide">Resultado Financeiro</p>
+        <Card className="overflow-hidden border-border shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+          <div className="border-b border-border bg-muted/40 px-4 py-2.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Resultado Financeiro</p>
           </div>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap md:whitespace-normal">
               <tbody>
                 {[
                   { label: "Obj. Financeiro", value: fmtCur(totalMetaFin), color: "text-amber-600", bg: "bg-amber-50" },
-                  { label: "Vda Real. Mês", value: fmtCur(receitaTotalEquipe), color: "text-slate-900", bg: "" },
+                  { label: "Vda Real. Mês", value: fmtCur(receitaTotalEquipe), color: "text-foreground", bg: "" },
                   { label: "% Realizado", value: fmtPct(pctFinanceiroRealizado), color: pctFinanceiroRealizado >= pctIdeal ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
-                  { label: "Projeção Fech.", value: fmtCur(projecaoFechamento), color: "text-slate-900", bg: "" },
+                  { label: "Projeção Fech.", value: fmtCur(projecaoFechamento), color: "text-foreground", bg: "" },
                   { label: "% Projeção Fech.", value: fmtPct(pctProjecao), color: pctProjecao >= 100 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold", bg: "" },
                   { label: "Necessidade Venda/dia", value: fmtCur(necessidadeVendaDia), color: "text-amber-700 font-bold", bg: "bg-yellow-50" },
                 ].map(({ label, value, color, bg }) => (
-                  <tr key={label} className={`border-b hover:bg-slate-50 ${bg}`}>
-                    <td className="px-4 py-2.5 text-slate-600 font-medium">{label}</td>
+                  <tr key={label} className={`border-b border-border hover:bg-muted/40 ${bg}`}>
+                    <td className="px-4 py-2.5 text-muted-foreground font-medium">{label}</td>
                     <td className={`px-4 py-2.5 text-right font-mono ${color}`}>{value}</td>
                   </tr>
                 ))}
@@ -294,12 +308,12 @@ export default async function EquipePage({
       </div>
 
       {/* ─── TABELA DE FORNECEDORES ─── */}
-      <Card className="overflow-hidden border-0 shadow-md">
-        <div className="bg-slate-800 px-5 py-3 flex items-center justify-between flex-wrap gap-2">
-          <h2 className="text-white font-bold text-sm tracking-wide uppercase">
+      <Card className="overflow-hidden border-border shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="border-b border-border px-5 py-3 flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-foreground font-medium text-base">
             Objetivo em Caixas · Meta Financeira · Desafio Distribuição
           </h2>
-          <span className="text-slate-400 text-xs bg-slate-700 px-3 py-1 rounded-full">
+          <span className="text-muted-foreground text-xs bg-muted px-3 py-1 rounded-full">
             {tableData.length} fornecedores
           </span>
         </div>
@@ -308,13 +322,13 @@ export default async function EquipePage({
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr>
-                <th className="px-3 py-2 border-b border-r bg-slate-100 font-bold text-slate-700 text-center" rowSpan={2}>CM</th>
-                <th className="px-3 py-2 border-b border-r bg-slate-100 font-bold text-slate-700" rowSpan={2}>Fornecedor</th>
-                <th colSpan={4} className="px-3 py-1.5 border-b border-r text-center font-bold bg-yellow-100 text-yellow-900 border-t">Objetivo em Caixas</th>
-                <th colSpan={3} className="px-3 py-1.5 border-b border-r text-center font-bold bg-green-100 text-green-900 border-t">Meta Financeira</th>
-                <th colSpan={3} className="px-3 py-1.5 border-b text-center font-bold bg-blue-100 text-blue-900 border-t">Desafio Distribuição Numérica</th>
+                <th className="px-3 py-2 border-b border-r bg-muted font-semibold text-muted-foreground text-center" rowSpan={2}>CM</th>
+                <th className="px-3 py-2 border-b border-r bg-muted font-semibold text-muted-foreground" rowSpan={2}>Fornecedor</th>
+                <th colSpan={4} className="px-3 py-1.5 border-b border-r text-center font-semibold bg-amber-50 text-amber-800 border-t">Objetivo em Caixas</th>
+                <th colSpan={3} className="px-3 py-1.5 border-b border-r text-center font-semibold bg-emerald-50 text-emerald-800 border-t">Meta Financeira</th>
+                <th colSpan={3} className="px-3 py-1.5 border-b text-center font-semibold bg-blue-50 text-blue-800 border-t">Desafio Distribuição Numérica</th>
               </tr>
-              <tr className="bg-slate-50 text-[10px] text-slate-600 uppercase tracking-wide">
+              <tr className="bg-muted/40 text-[10px] text-muted-foreground uppercase tracking-wide">
                 <th className="px-2 py-1.5 border-b border-r text-right">Volume Cx</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">Venda Real.</th>
                 <th className="px-2 py-1.5 border-b border-r text-right">% Real.</th>
@@ -330,7 +344,7 @@ export default async function EquipePage({
             <tbody>
               {tableData.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="text-center py-12 text-slate-400">
+                  <td colSpan={11} className="text-center py-12 text-muted-foreground">
                     Nenhuma meta cadastrada pra este período (rode scripts/seed_metas_v1.mjs ou cadastre em /admin/metas).
                   </td>
                 </tr>
@@ -341,25 +355,25 @@ export default async function EquipePage({
                 const isDistBad = row.desafioDist > 0 && row.realDist < row.desafioDist * (pctIdeal / 100);
 
                 return (
-                  <tr key={row.nome} className={`border-b transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"} hover:bg-blue-50/40`}>
-                    <td className="px-2 py-2 border-r text-center text-slate-400 font-mono">{idx + 1}</td>
-                    <td className="px-3 py-2 border-r font-semibold text-slate-800 whitespace-nowrap max-w-[150px] truncate">{row.nome}</td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-700">{fmtNum2(row.metaCx || 0)}</td>
-                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-slate-900">{fmtNum2(row.realCx)}</td>
-                    <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaCx > 0 ? (isCxBad ? "text-rose-600 bg-rose-50" : "text-emerald-600") : "text-slate-400"}`}>
+                  <tr key={row.nome} className={`border-b border-border transition-colors ${idx % 2 === 0 ? "bg-card" : "bg-muted/20"} hover:bg-accent/40`}>
+                    <td className="px-2 py-2 border-r text-center text-muted-foreground font-mono">{idx + 1}</td>
+                    <td className="px-3 py-2 border-r font-semibold text-foreground whitespace-nowrap max-w-[150px] truncate">{row.nome}</td>
+                    <td className="px-2 py-2 border-r text-right font-mono text-muted-foreground">{fmtNum2(row.metaCx || 0)}</td>
+                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-foreground">{fmtNum2(row.realCx)}</td>
+                    <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaCx > 0 ? (isCxBad ? "text-negative bg-rose-50" : "text-positive") : "text-muted-foreground"}`}>
                       {row.metaCx > 0 ? fmtPct(row.pctCx) : "-"}
                     </td>
-                    <td className="px-2 py-2 border-r text-right font-mono bg-yellow-50 text-yellow-800 font-bold">
+                    <td className="px-2 py-2 border-r text-right font-mono bg-amber-50 text-amber-800 font-bold">
                       {row.metaDiaCx > 0 ? fmtNum2(row.metaDiaCx) : "-"}
                     </td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">{row.metaFin > 0 ? fmtCur(row.metaFin) : "-"}</td>
-                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-slate-900">{fmtCur(row.realFin)}</td>
-                    <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaFin > 0 ? (isFinBad ? "text-rose-600 bg-rose-50" : "text-emerald-700") : "text-slate-400"}`}>
+                    <td className="px-2 py-2 border-r text-right font-mono text-muted-foreground">{row.metaFin > 0 ? fmtCur(row.metaFin) : "-"}</td>
+                    <td className="px-2 py-2 border-r text-right font-mono font-semibold text-foreground">{fmtCur(row.realFin)}</td>
+                    <td className={`px-2 py-2 border-r text-right font-mono font-bold ${row.metaFin > 0 ? (isFinBad ? "text-negative bg-rose-50" : "text-positive") : "text-muted-foreground"}`}>
                       {row.metaFin > 0 ? fmtPct(row.pctFin) : "-"}
                     </td>
-                    <td className="px-2 py-2 border-r text-right font-mono text-slate-500">{row.desafioDist > 0 ? fmtNum0(row.desafioDist) : "-"}</td>
-                    <td className={`px-2 py-2 border-r text-right font-mono font-semibold ${isDistBad ? "text-rose-600" : "text-slate-900"}`}>{fmtNum0(row.realDist)}</td>
-                    <td className={`px-2 py-2 text-right font-mono font-bold ${row.faltaDist > 0 ? "text-rose-500" : "text-emerald-600"}`}>
+                    <td className="px-2 py-2 border-r text-right font-mono text-muted-foreground">{row.desafioDist > 0 ? fmtNum0(row.desafioDist) : "-"}</td>
+                    <td className={`px-2 py-2 border-r text-right font-mono font-semibold ${isDistBad ? "text-negative" : "text-foreground"}`}>{fmtNum0(row.realDist)}</td>
+                    <td className={`px-2 py-2 text-right font-mono font-bold ${row.faltaDist > 0 ? "text-negative" : "text-positive"}`}>
                       {row.desafioDist > 0 ? (row.faltaDist > 0 ? fmtNum0(row.faltaDist) : "✓") : "-"}
                     </td>
                   </tr>
@@ -391,7 +405,7 @@ export default async function EquipePage({
             <Link
               key={repId}
               href={`/equipe?rep=${repId}`}
-              className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               Ver RPA {repId}
             </Link>

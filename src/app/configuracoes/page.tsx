@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Settings, Save } from "lucide-react"
+import { Save } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 function mesAtual() {
   const now = new Date()
@@ -45,15 +46,10 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[700px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-2 border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Settings className="w-8 h-8 text-blue-600" />
-          Configurações — Período
-        </h1>
-        <p className="text-muted-foreground">
-          Substitui o objeto PERIODO fixo no código — cadastre aqui todo início de mês.
-        </p>
-      </div>
+      <PageHeader
+        title="Configurações — Período"
+        subtitle="Substitui o objeto PERIODO fixo no código — cadastre aqui todo início de mês."
+      />
 
       <Card>
         <CardHeader>

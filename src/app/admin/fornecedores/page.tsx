@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Truck, Plus, Trash2, AlertTriangle, Pencil, X, Save } from "lucide-react"
+import { Plus, Trash2, AlertTriangle, Pencil, X, Save } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 type Fornecedor = { id: number; nome_fantasia: string; ativo: boolean }
 type Alias = { razao_social_erp: string; fornecedor_id: number }
@@ -98,15 +99,10 @@ export default function FornecedoresAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1100px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-2 border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Truck className="w-8 h-8 text-blue-600" />
-          Fornecedores
-        </h1>
-        <p className="text-muted-foreground">
-          Nome fantasia usado nas telas de metas/rankings + o mapeamento de razão social do ERP pra cada um.
-        </p>
-      </div>
+      <PageHeader
+        title="Fornecedores"
+        subtitle="Nome fantasia usado nas telas de metas/rankings + o mapeamento de razão social do ERP pra cada um."
+      />
 
       {naoMapeados.length > 0 && (
         <Card className="border-amber-300 bg-amber-50">
@@ -160,7 +156,7 @@ export default function FornecedoresAdminPage() {
       <Card className="overflow-hidden">
         <CardHeader><CardTitle>Fornecedores cadastrados ({fornecedores.length})</CardTitle></CardHeader>
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead>Nome Fantasia</TableHead>
               <TableHead>Aliases (razão social ERP)</TableHead>
@@ -169,13 +165,13 @@ export default function FornecedoresAdminPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={3} className="h-24 text-center text-slate-500">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : fornecedores.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="h-24 text-center text-slate-500">Nenhum fornecedor cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">Nenhum fornecedor cadastrado.</TableCell></TableRow>
             ) : (
               fornecedores.map((f) => (
-                <TableRow key={f.id} className={`hover:bg-slate-50 ${f.nome_fantasia.startsWith("[Revisar]") ? "bg-amber-50/50" : ""}`}>
-                  <TableCell className="font-semibold text-slate-800">
+                <TableRow key={f.id} className={`hover:bg-muted/40 ${f.nome_fantasia.startsWith("[Revisar]") ? "bg-amber-50/50" : ""}`}>
+                  <TableCell className="font-semibold text-foreground">
                     {editingId === f.id ? (
                       <div className="flex gap-2">
                         <Input value={editingNome} onChange={(e) => setEditingNome(e.target.value)} className="h-8" />
@@ -189,7 +185,7 @@ export default function FornecedoresAdminPage() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {aliases.filter(a => a.fornecedor_id === f.id).map(a => (
-                        <span key={a.razao_social_erp} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                        <span key={a.razao_social_erp} className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                           {a.razao_social_erp}
                           <button onClick={() => handleDeleteAlias(a.razao_social_erp)} className="hover:text-rose-600">
                             <Trash2 className="w-3 h-3" />

@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { Trophy } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 
 export const revalidate = 0;
 
@@ -36,17 +38,20 @@ export default async function RankingPositivacaoPage() {
     })
     .sort((a, b) => b.pct - a.pct);
 
+  const chartData = ranking.slice(0, 10).map((r) => ({ label: r.nome, value: r.pct }));
+
   const fmtPct = (v: number) => `${v.toFixed(2)}%`;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <Trophy className="w-7 h-7 text-amber-400" />
-          Ranking de Positivação
-        </h1>
-        <p className="text-slate-400 mt-1">% de atingimento do objetivo de positivação por representante — {mes.slice(0, 7)}</p>
-      </div>
+      <PageHeader
+        title="Ranking de Positivação"
+        subtitle={`% de atingimento do objetivo de positivação por representante — ${mes.slice(0, 7)}`}
+      />
+
+      <ChartCard title="% de atingimento por representante" isEmpty={chartData.length === 0}>
+        <CategoryBarChart data={chartData} format="percent" />
+      </ChartCard>
 
       <Card>
         <CardHeader>
@@ -66,15 +71,15 @@ export default async function RankingPositivacaoPage() {
             </TableHeader>
             <TableBody>
               {ranking.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-500">Sem dados pra este período.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Sem dados pra este período.</TableCell></TableRow>
               )}
               {ranking.map((r, idx) => (
                 <TableRow key={r.representante_id}>
-                  <TableCell className="text-center font-bold text-slate-500">{idx + 1}º</TableCell>
+                  <TableCell className="text-center font-bold text-muted-foreground">{idx + 1}º</TableCell>
                   <TableCell className="font-semibold">{r.nome}</TableCell>
                   <TableCell className="text-right font-mono">{r.obj}</TableCell>
                   <TableCell className="text-right font-mono font-semibold">{r.positivados}</TableCell>
-                  <TableCell className={`text-right font-mono font-bold ${r.pct >= 100 ? "text-emerald-600" : r.pct >= 60 ? "text-amber-600" : "text-rose-600"}`}>
+                  <TableCell className={`text-right font-mono font-bold ${r.pct >= 100 ? "text-positive" : r.pct >= 60 ? "text-amber-600" : "text-negative"}`}>
                     {fmtPct(r.pct)}
                   </TableCell>
                 </TableRow>

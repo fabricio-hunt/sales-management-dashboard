@@ -76,17 +76,17 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b bg-white shrink-0 z-40 relative">
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card shrink-0 z-40 relative">
         <Link href="/">
           <Image
             src="/logo.jpg"
             alt="Avante Distribuição"
-            width={48}
-            height={48}
-            className="object-cover rounded-full shadow-sm"
+            width={40}
+            height={40}
+            className="object-cover rounded-full"
           />
         </Link>
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
+        <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-muted-foreground hover:bg-muted rounded-md transition-colors">
           <Menu className="w-6 h-6" />
         </button>
       </div>
@@ -100,29 +100,30 @@ export function Sidebar() {
       )}
 
       {/* Sidebar Content */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"} flex flex-col h-screen shrink-0`}>
-        <div className="h-20 flex items-center justify-between px-6 border-b shrink-0 py-4">
-          <Link href="/" className="flex items-center">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"} flex flex-col h-screen shrink-0`}>
+        <div className="h-16 flex items-center justify-between px-5 border-b border-border shrink-0">
+          <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo.jpg"
               alt="Avante Distribuição"
-              width={72}
-              height={72}
-              className="object-cover rounded-full shadow-sm"
+              width={32}
+              height={32}
+              className="object-cover rounded-full"
             />
+            <span className="text-sm font-semibold text-foreground">Avante</span>
           </Link>
-          <button onClick={() => setIsOpen(false)} className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-md">
+          <button onClick={() => setIsOpen(false)} className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-md">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+        <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
           {menuGroups.map((group, index) => (
             <div key={index}>
-              <p className="px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 {group.title}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.links.map((link) => {
                   const Icon = link.icon;
                   const isActive = pathname === link.href;
@@ -132,13 +133,13 @@ export function Sidebar() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group text-sm ${isActive
-                          ? "bg-blue-50 text-blue-700 font-semibold"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150 group text-sm ${isActive
+                          ? "bg-accent text-accent-foreground font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                     >
                       <Icon
-                        className={`w-4 h-4 transition-colors ${isActive ? "text-blue-600" : "group-hover:text-slate-900"}`}
+                        className={`w-4 h-4 transition-colors ${isActive ? "text-accent-foreground" : "group-hover:text-foreground"}`}
                       />
                       {link.label}
                     </Link>
@@ -149,14 +150,14 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="p-4 border-t shrink-0 bg-slate-50">
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm">
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
               A
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900">Administrador</span>
-              <span className="text-xs text-slate-500">Admin</span>
+              <span className="text-sm font-medium text-foreground">Administrador</span>
+              <span className="text-xs text-muted-foreground">Admin</span>
             </div>
           </div>
         </div>

@@ -1,7 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { BarChart3 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { KpiGrid } from "@/components/data-display/KpiGrid";
+import { KpiCard } from "@/components/data-display/KpiCard";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { DistributionDonut } from "@/components/charts/DistributionDonut";
+import { tokens } from "@/lib/design-tokens";
 
 export const revalidate = 0;
 
@@ -13,7 +18,13 @@ function mesAtual() {
 const classeCor: Record<string, string> = {
   A: "bg-emerald-100 text-emerald-800",
   B: "bg-amber-100 text-amber-800",
-  C: "bg-slate-100 text-slate-600",
+  C: "bg-muted text-muted-foreground",
+};
+
+const classeChartColor: Record<string, string> = {
+  A: tokens.colors.positive,
+  B: "#F59E0B",
+  C: tokens.colors.neutral,
 };
 
 export default async function ProdutosPage() {
@@ -66,34 +77,40 @@ export default async function ProdutosPage() {
     { items: [], acumulado: 0 }
   ).items;
 
-  const contagem = { A: comClasse.filter((p) => p.classe === "A").length, B: comClasse.filter((p) => p.classe === "B").length, C: comClasse.filter((p) => p.classe === "C").length };
+  const contagem = { A: 0, B: 0, C: 0 };
+  const valorPorClasse = { A: 0, B: 0, C: 0 };
+  for (const p of comClasse) {
+    contagem[p.classe as "A" | "B" | "C"] += 1;
+    valorPorClasse[p.classe as "A" | "B" | "C"] += p.venda_liq;
+  }
+
+  const donutData = (["A", "B", "C"] as const)
+    .filter((c) => valorPorClasse[c] > 0)
+    .map((c) => ({ label: `Classe ${c}`, value: valorPorClasse[c], color: classeChartColor[c] }));
 
   const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <BarChart3 className="w-7 h-7 text-cyan-400" />
-          Curva ABC de Produtos
-        </h1>
-        <p className="text-slate-400 mt-1">
-          Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa
-          prática de gestão comercial pra distribuidoras. {mes.slice(0, 7)}
-        </p>
-      </div>
+      <PageHeader
+        title="Curva ABC de Produtos"
+        subtitle={`Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa prática de gestão comercial pra distribuidoras. ${mes.slice(0, 7)}`}
+      />
 
-      <div className="grid grid-cols-3 gap-4">
-        {(["A", "B", "C"] as const).map((c) => (
-          <Card key={c}>
-            <CardContent className="p-4 text-center">
-              <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold mb-2 ${classeCor[c]}`}>{c}</div>
-              <div className="text-2xl font-bold text-slate-800">{contagem[c]}</div>
-              <div className="text-xs text-slate-500">produtos</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <KpiGrid>
+        <KpiCard label="Produtos Classe A" value={contagem.A} hint={fmtCur(valorPorClasse.A)} />
+        <KpiCard label="Produtos Classe B" value={contagem.B} hint={fmtCur(valorPorClasse.B)} />
+        <KpiCard label="Produtos Classe C" value={contagem.C} hint={fmtCur(valorPorClasse.C)} />
+        <KpiCard label="Faturamento Total" value={fmtCur(totalGeral)} />
+      </KpiGrid>
+
+      <ChartCard
+        title="Distribuição por classe"
+        subtitle="Participação de cada classe no faturamento do período."
+        isEmpty={donutData.length === 0}
+      >
+        <DistributionDonut data={donutData} format="currency-compact" />
+      </ChartCard>
 
       <Card>
         <CardHeader>
@@ -103,7 +120,7 @@ export default async function ProdutosPage() {
         <CardContent>
           <div className="max-h-[70vh] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-white">
+              <TableHeader className="sticky top-0 bg-card">
                 <TableRow>
                   <TableHead className="w-14">Classe</TableHead>
                   <TableHead>Produto</TableHead>
@@ -115,7 +132,7 @@ export default async function ProdutosPage() {
               </TableHeader>
               <TableBody>
                 {comClasse.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-500">Sem vendas no período.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Sem vendas no período.</TableCell></TableRow>
                 )}
                 {comClasse.slice(0, 300).map((p) => (
                   <TableRow key={p.id}>
@@ -123,10 +140,10 @@ export default async function ProdutosPage() {
                       <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${classeCor[p.classe]}`}>{p.classe}</span>
                     </TableCell>
                     <TableCell className="max-w-[280px] truncate">{p.descricao}</TableCell>
-                    <TableCell className="text-slate-500">{p.fornecedor}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.fornecedor}</TableCell>
                     <TableCell className="text-right font-mono">{p.qtde.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono font-semibold">{fmtCur(p.venda_liq)}</TableCell>
-                    <TableCell className="text-right font-mono text-slate-500">{p.pctAcumulado.toFixed(1)}%</TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">{p.pctAcumulado.toFixed(1)}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

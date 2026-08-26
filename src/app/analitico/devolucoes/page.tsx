@@ -1,7 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { Undo2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { KpiGrid } from "@/components/data-display/KpiGrid";
+import { KpiCard } from "@/components/data-display/KpiCard";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 
 export const revalidate = 0;
 
@@ -25,6 +29,7 @@ export default async function DevolucoesPage() {
 
   const porMotivo = new Map<string, { valor: number; ocorrencias: number; clientes: Set<string> }>();
   let totalDevolucao = 0;
+  const clientesAfetados = new Set<string>();
   for (const r of rows ?? []) {
     const motivo = r.motivo_devolucao || "Sem motivo informado";
     const acc = porMotivo.get(motivo) ?? { valor: 0, ocorrencias: 0, clientes: new Set() };
@@ -33,23 +38,31 @@ export default async function DevolucoesPage() {
     acc.clientes.add(r.cliente_id);
     porMotivo.set(motivo, acc);
     totalDevolucao += Number(r.devolucao);
+    clientesAfetados.add(r.cliente_id);
   }
 
   const ranking = [...porMotivo.entries()]
     .map(([motivo, v]) => ({ motivo, valor: v.valor, ocorrencias: v.ocorrencias, clientes: v.clientes.size }))
     .sort((a, b) => b.valor - a.valor);
 
+  const chartData = ranking.slice(0, 8).map((r) => ({ label: r.motivo, value: r.valor }));
+
   const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <Undo2 className="w-7 h-7 text-red-400" />
-          Devoluções de Vendas
-        </h1>
-        <p className="text-slate-400 mt-1">Total devolvido no período: {fmtCur(totalDevolucao)} — {mes.slice(0, 7)}</p>
-      </div>
+      <PageHeader title="Devoluções de Vendas" subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`} />
+
+      <KpiGrid>
+        <KpiCard label="Total devolvido" value={fmtCur(totalDevolucao)} />
+        <KpiCard label="Ocorrências" value={ranking.reduce((s, r) => s + r.ocorrencias, 0)} />
+        <KpiCard label="Clientes afetados" value={clientesAfetados.size} />
+        <KpiCard label="Motivos distintos" value={ranking.length} />
+      </KpiGrid>
+
+      <ChartCard title="Valor devolvido por motivo" subtitle="Top motivos no período." isEmpty={chartData.length === 0}>
+        <CategoryBarChart data={chartData} format="currency-compact" color="#DC2626" />
+      </ChartCard>
 
       <Card>
         <CardHeader>
@@ -68,14 +81,14 @@ export default async function DevolucoesPage() {
             </TableHeader>
             <TableBody>
               {ranking.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-slate-500">Nenhuma devolução no período.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhuma devolução no período.</TableCell></TableRow>
               )}
               {ranking.map((r) => (
                 <TableRow key={r.motivo}>
                   <TableCell className="font-medium">{r.motivo}</TableCell>
                   <TableCell className="text-right font-mono">{r.ocorrencias}</TableCell>
                   <TableCell className="text-right font-mono">{r.clientes}</TableCell>
-                  <TableCell className="text-right font-mono font-semibold text-rose-600">{fmtCur(r.valor)}</TableCell>
+                  <TableCell className="text-right font-mono font-semibold text-negative">{fmtCur(r.valor)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

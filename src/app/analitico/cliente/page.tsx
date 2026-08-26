@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { PieChart } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 
 export const revalidate = 0;
 
@@ -40,17 +42,17 @@ export default async function AnaliticoClientePage() {
     .sort((a, b) => b.venda_liq - a.venda_liq)
     .slice(0, 200);
 
+  const chartData = ranking.slice(0, 10).map((c) => ({ label: c.nome, value: c.venda_liq }));
+
   const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <PieChart className="w-7 h-7 text-pink-400" />
-          Analítico Cliente
-        </h1>
-        <p className="text-slate-400 mt-1">Venda e devolução por cliente — {mes.slice(0, 7)}</p>
-      </div>
+      <PageHeader title="Analítico Cliente" subtitle={`Venda e devolução por cliente — ${mes.slice(0, 7)}`} />
+
+      <ChartCard title="Top 10 clientes por faturamento" isEmpty={chartData.length === 0}>
+        <CategoryBarChart data={chartData} format="currency-compact" />
+      </ChartCard>
 
       <Card>
         <CardHeader>
@@ -60,7 +62,7 @@ export default async function AnaliticoClientePage() {
         <CardContent>
           <div className="max-h-[70vh] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-white">
+              <TableHeader className="sticky top-0 bg-card">
                 <TableRow>
                   <TableHead>Cliente</TableHead>
                   <TableHead className="text-right">Dias com compra</TableHead>
@@ -71,14 +73,14 @@ export default async function AnaliticoClientePage() {
               </TableHeader>
               <TableBody>
                 {ranking.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-500">Sem dados pra este período.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Sem dados pra este período.</TableCell></TableRow>
                 )}
                 {ranking.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.nome}</TableCell>
                     <TableCell className="text-right font-mono">{c.dias}</TableCell>
                     <TableCell className="text-right font-mono">{c.qtde.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono text-rose-600">{c.devolucao > 0 ? fmtCur(c.devolucao) : "-"}</TableCell>
+                    <TableCell className="text-right font-mono text-negative">{c.devolucao > 0 ? fmtCur(c.devolucao) : "-"}</TableCell>
                     <TableCell className="text-right font-mono font-semibold">{fmtCur(c.venda_liq)}</TableCell>
                   </TableRow>
                 ))}

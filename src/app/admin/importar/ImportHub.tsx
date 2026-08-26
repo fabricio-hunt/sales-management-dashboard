@@ -14,6 +14,7 @@ import {
   UserCircle,
   Target,
 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type Tipo = "vendas" | "fornecedores" | "clientes" | "metas";
 
@@ -58,14 +59,12 @@ export default function ImportHub({ recentImports }: { recentImports: ImportLogR
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Importação de Dados</h1>
-        <p className="text-muted-foreground">
-          Cada tipo de dado tem sua própria importação, independente das outras — suba só o que precisar atualizar.
-        </p>
-      </div>
+      <PageHeader
+        title="Importação de Dados"
+        subtitle="Cada tipo de dado tem sua própria importação, independente das outras — suba só o que precisar atualizar."
+      />
 
-      <div className="flex gap-2 border-b overflow-x-auto">
+      <div className="flex gap-2 border-b border-border overflow-x-auto">
         {TABS.map(({ tipo, label, icon: Icon }) => (
           <button
             key={tipo}

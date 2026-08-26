@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
-import { Package } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export const revalidate = 0;
 
@@ -43,13 +43,10 @@ export default async function DistribuicaoPage() {
 
   return (
     <div className="p-6 max-w-[1500px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <Package className="w-7 h-7 text-blue-400" />
-          Resumo Distribuição
-        </h1>
-        <p className="text-slate-400 mt-1">Clientes distintos positivados por representante × fornecedor — {mes.slice(0, 7)}</p>
-      </div>
+      <PageHeader
+        title="Resumo Distribuição"
+        subtitle={`Clientes distintos positivados por representante × fornecedor — ${mes.slice(0, 7)}`}
+      />
 
       <Card className="overflow-hidden">
         <CardHeader>
@@ -59,8 +56,8 @@ export default async function DistribuicaoPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50">
-                <th className="px-3 py-2 border-b border-r text-left sticky left-0 bg-slate-50">RPA</th>
+              <tr className="bg-muted/40">
+                <th className="px-3 py-2 border-b border-r text-left sticky left-0 bg-muted/40">RPA</th>
                 {fornecedoresComMeta.map((f) => (
                   <th key={f.id} className="px-2 py-2 border-b border-r text-right whitespace-nowrap">{fornecedorNome.get(f.id)}</th>
                 ))}
@@ -68,14 +65,14 @@ export default async function DistribuicaoPage() {
             </thead>
             <tbody>
               {(reps ?? []).map((rep) => (
-                <tr key={rep.id} className="border-b hover:bg-slate-50">
-                  <td className="px-3 py-1.5 border-r font-semibold sticky left-0 bg-white">{rep.id}</td>
+                <tr key={rep.id} className="border-b hover:bg-muted/30">
+                  <td className="px-3 py-1.5 border-r font-semibold sticky left-0 bg-card">{rep.id}</td>
                   {fornecedoresComMeta.map((f) => {
                     const real = pivot.get(rep.id)?.get(f.id) ?? 0;
                     const desafio = desafioMap.get(`${rep.id}:${f.id}`) ?? 0;
                     const abaixo = desafio > 0 && real < desafio;
                     return (
-                      <td key={f.id} className={`px-2 py-1.5 border-r text-right font-mono ${abaixo ? "text-rose-600" : "text-slate-800"}`}>
+                      <td key={f.id} className={`px-2 py-1.5 border-r text-right font-mono ${abaixo ? "text-negative" : "text-foreground"}`}>
                         {real}
                       </td>
                     );

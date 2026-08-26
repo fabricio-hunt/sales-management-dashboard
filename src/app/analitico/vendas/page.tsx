@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export const revalidate = 0;
 
@@ -45,23 +45,20 @@ export default async function AnaliticoVendasPage({
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <BarChart3 className="w-7 h-7 text-cyan-400" />
-          Analítico de Vendas
-        </h1>
-        <p className="text-slate-400 mt-1">Extrato detalhado por nota — {mes.slice(0, 7)} — {count ?? 0} registro(s)</p>
-      </div>
+      <PageHeader
+        title="Analítico de Vendas"
+        subtitle={`Extrato detalhado por nota — ${mes.slice(0, 7)} — ${count ?? 0} registro(s)`}
+      />
 
       <div className="flex flex-wrap gap-2">
-        <Link href="/analitico/vendas?page=1" className={`text-xs px-3 py-1.5 rounded-full ${!repFiltro ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+        <Link href="/analitico/vendas?page=1" className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!repFiltro ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
           Todos
         </Link>
         {(representantes ?? []).map((r) => (
           <Link
             key={r.id}
             href={`/analitico/vendas?page=1&rep=${r.id}`}
-            className={`text-xs px-3 py-1.5 rounded-full ${repFiltro === r.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
+            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${repFiltro === r.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
           >
             {r.id}
           </Link>
@@ -89,7 +86,7 @@ export default async function AnaliticoVendasPage({
               </TableHeader>
               <TableBody>
                 {(!rows || rows.length === 0) && (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-500">Nenhuma venda encontrada.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada.</TableCell></TableRow>
                 )}
                 {rows?.map((v, idx) => {
                   const cliente = Array.isArray(v.clientes) ? v.clientes[0] : v.clientes;
@@ -113,14 +110,14 @@ export default async function AnaliticoVendasPage({
           <div className="flex items-center justify-between pt-4 text-sm">
             <Link
               href={buildHref(Math.max(1, page - 1))}
-              className={`px-3 py-1.5 rounded-md border ${page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-slate-50"}`}
+              className={`px-3 py-1.5 rounded-md border border-border ${page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-muted"}`}
             >
               &larr; Anterior
             </Link>
-            <span className="text-slate-500">Página {page} de {totalPages}</span>
+            <span className="text-muted-foreground">Página {page} de {totalPages}</span>
             <Link
               href={buildHref(Math.min(totalPages, page + 1))}
-              className={`px-3 py-1.5 rounded-md border ${page >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-slate-50"}`}
+              className={`px-3 py-1.5 rounded-md border border-border ${page >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-muted"}`}
             >
               Próxima &rarr;
             </Link>

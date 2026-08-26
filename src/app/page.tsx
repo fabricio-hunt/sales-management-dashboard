@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
 import {
   BarChart3,
   PieChart,
@@ -12,101 +12,78 @@ import {
   Users,
   Settings,
   Upload,
-  ArrowRight
+  ArrowRight,
+  LayoutDashboard,
 } from "lucide-react";
 
-export default function DashboardHub() {
-  const analiticos = [
-    { title: "Ranking Positivação", href: "/rankings/positivacao", icon: Trophy, color: "text-amber-500", desc: "Top clientes positivados" },
-    { title: "Ranking Financeiro", href: "/rankings/financeiro", icon: DollarSign, color: "text-emerald-500", desc: "Top clientes em faturamento" },
-    { title: "Resumo Distribuição", href: "/distribuicao", icon: Package, color: "text-blue-500", desc: "Distribuição de produtos" },
-    { title: "Evolução por Cliente", href: "/evolucao", icon: LineChart, color: "text-indigo-500", desc: "Histórico de compras" },
-    { title: "Analítico de Vendas", href: "/analitico/vendas", icon: BarChart3, color: "text-cyan-500", desc: "Extrato detalhado por nota" },
-    { title: "Faturamento Dia", href: "/analitico/faturamento-dia", icon: TrendingUp, color: "text-violet-500", desc: "Vendas diárias" },
-    { title: "Analítico Cliente", href: "/analitico/cliente", icon: PieChart, color: "text-pink-500", desc: "Vendas e devoluções diárias" },
-    { title: "Devoluções de Vendas", href: "/analitico/devolucoes", icon: Undo2, color: "text-red-500", desc: "Motivos de devolução" },
-  ];
+type HubItem = { title: string; href: string; icon: React.ElementType; desc: string };
 
-  const resultados = [
-    { title: "Geral Empresa", href: "/", icon: LayoutDashboard, color: "text-slate-700", desc: "Consolidado total (Em breve)" },
-    { title: "Equipes / RPAs", href: "/equipe", icon: Users, color: "text-blue-600", desc: "Desempenho por vendedor" },
-  ];
+const analiticos: HubItem[] = [
+  { title: "Ranking Positivação", href: "/rankings/positivacao", icon: Trophy, desc: "Top clientes positivados" },
+  { title: "Ranking Financeiro", href: "/rankings/financeiro", icon: DollarSign, desc: "Top clientes em faturamento" },
+  { title: "Resumo Distribuição", href: "/distribuicao", icon: Package, desc: "Distribuição de produtos" },
+  { title: "Evolução por Cliente", href: "/evolucao", icon: LineChart, desc: "Histórico de compras" },
+  { title: "Analítico de Vendas", href: "/analitico/vendas", icon: BarChart3, desc: "Extrato detalhado por nota" },
+  { title: "Faturamento Dia", href: "/analitico/faturamento-dia", icon: TrendingUp, desc: "Vendas diárias" },
+  { title: "Analítico Cliente", href: "/analitico/cliente", icon: PieChart, desc: "Vendas e devoluções diárias" },
+  { title: "Devoluções de Vendas", href: "/analitico/devolucoes", icon: Undo2, desc: "Motivos de devolução" },
+];
 
-  const interno = [
-    { title: "Atualizar Dados", href: "/admin/importar", icon: Upload, color: "text-slate-500", desc: "Importar novas planilhas" },
-    { title: "Configurações", href: "/configuracoes", icon: Settings, color: "text-slate-500", desc: "Ajustes do sistema" },
-  ];
+const resultados: HubItem[] = [
+  { title: "Geral Empresa", href: "/", icon: LayoutDashboard, desc: "Consolidado total (Em breve)" },
+  { title: "Equipes / RPAs", href: "/equipe", icon: Users, desc: "Desempenho por vendedor" },
+];
 
-  // Helper component for the hub links
-  const HubCard = ({ item }: { item: { title: string; href: string; icon: React.ElementType; color: string; desc: string } }) => (
-    <Link href={item.href} className="block group">
-      <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-blue-200 hover:-translate-y-1">
-        <CardContent className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl bg-slate-100 group-hover:bg-blue-50 transition-colors ${item.color}`}>
-              <item.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
-                {item.title}
-              </h3>
-              <p className="text-sm text-slate-500">{item.desc}</p>
-            </div>
+const interno: HubItem[] = [
+  { title: "Atualizar Dados", href: "/admin/importar", icon: Upload, desc: "Importar novas planilhas" },
+  { title: "Configurações", href: "/configuracoes", icon: Settings, desc: "Ajustes do sistema" },
+];
+
+function HubCard({ item }: { item: HubItem }) {
+  return (
+    <Link href={item.href} className="group block">
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-primary/30 hover:bg-accent/40">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-muted p-2.5 text-muted-foreground transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+            <item.icon className="h-5 w-5" />
           </div>
-          <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
-        </CardContent>
-      </Card>
+          <div>
+            <h3 className="text-sm font-medium text-foreground">{item.title}</h3>
+            <p className="text-xs text-muted-foreground">{item.desc}</p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
+      </div>
     </Link>
   );
+}
 
+function HubSection({ title, icon: Icon, items }: { title: string; icon: React.ElementType; items: HubItem[] }) {
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Resumo Geral</h1>
-        <p className="text-slate-500">
-          Selecione um dos painéis abaixo para visualizar os indicadores comerciais.
-        </p>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 border-b border-border pb-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-medium text-foreground">{title}</h2>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Coluna 1: Dados Analíticos */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b">
-            <BarChart3 className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-800">Dados Analíticos</h2>
-          </div>
-          <div className="grid gap-3">
-            {analiticos.map((item, idx) => <HubCard key={idx} item={item} />)}
-          </div>
-        </div>
-
-        {/* Coluna 2: Resultado de Vendas */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b">
-            <TrendingUp className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-800">Resultado de Vendas</h2>
-          </div>
-          <div className="grid gap-3">
-            {resultados.map((item, idx) => <HubCard key={idx} item={item} />)}
-          </div>
-        </div>
-
-        {/* Coluna 3: Uso Interno */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b">
-            <Settings className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-800">Uso Interno</h2>
-          </div>
-          <div className="grid gap-3">
-            {interno.map((item, idx) => <HubCard key={idx} item={item} />)}
-          </div>
-        </div>
-
+      <div className="grid gap-2.5">
+        {items.map((item) => (
+          <HubCard key={item.href + item.title} item={item} />
+        ))}
       </div>
     </div>
   );
 }
-// Temporary import just for the layout icon above
-import { LayoutDashboard } from "lucide-react";
+
+export default function DashboardHub() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <PageHeader title="Resumo Geral" subtitle="Selecione um dos painéis abaixo para visualizar os indicadores comerciais." />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <HubSection title="Dados Analíticos" icon={BarChart3} items={analiticos} />
+        <HubSection title="Resultado de Vendas" icon={TrendingUp} items={resultados} />
+        <HubSection title="Uso Interno" icon={Settings} items={interno} />
+      </div>
+    </div>
+  );
+}

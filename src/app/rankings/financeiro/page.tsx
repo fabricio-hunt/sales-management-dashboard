@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { DollarSign } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ChartCard } from "@/components/data-display/ChartCard";
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 
 export const revalidate = 0;
 
@@ -42,15 +44,15 @@ export default async function RankingFinanceiroPage() {
     })
     .sort((a, b) => b.venda_liq - a.venda_liq);
 
+  const chartData = ranking.slice(0, 10).map((r) => ({ label: r.nome, value: r.venda_liq }));
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <DollarSign className="w-7 h-7 text-emerald-400" />
-          Ranking Financeiro
-        </h1>
-        <p className="text-slate-400 mt-1">Faturamento líquido por representante — {mes.slice(0, 7)}</p>
-      </div>
+      <PageHeader title="Ranking Financeiro" subtitle={`Faturamento líquido por representante — ${mes.slice(0, 7)}`} />
+
+      <ChartCard title="Faturamento por representante" isEmpty={chartData.length === 0}>
+        <CategoryBarChart data={chartData} format="currency-compact" color="#10B981" />
+      </ChartCard>
 
       <Card>
         <CardHeader>
@@ -70,15 +72,15 @@ export default async function RankingFinanceiroPage() {
             </TableHeader>
             <TableBody>
               {ranking.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-500">Sem dados pra este período.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Sem dados pra este período.</TableCell></TableRow>
               )}
               {ranking.map((r, idx) => (
                 <TableRow key={r.representante_id}>
-                  <TableCell className="text-center font-bold text-slate-500">{idx + 1}º</TableCell>
+                  <TableCell className="text-center font-bold text-muted-foreground">{idx + 1}º</TableCell>
                   <TableCell className="font-semibold">{r.nome}</TableCell>
-                  <TableCell className="text-right font-mono text-slate-500">{r.meta > 0 ? fmtCur(r.meta) : "-"}</TableCell>
+                  <TableCell className="text-right font-mono text-muted-foreground">{r.meta > 0 ? fmtCur(r.meta) : "-"}</TableCell>
                   <TableCell className="text-right font-mono font-semibold">{fmtCur(r.venda_liq)}</TableCell>
-                  <TableCell className={`text-right font-mono font-bold ${r.pct >= 100 ? "text-emerald-600" : r.pct >= 60 ? "text-amber-600" : "text-rose-600"}`}>
+                  <TableCell className={`text-right font-mono font-bold ${r.pct >= 100 ? "text-positive" : r.pct >= 60 ? "text-amber-600" : "text-negative"}`}>
                     {r.meta > 0 ? fmtPct(r.pct) : "-"}
                   </TableCell>
                 </TableRow>
