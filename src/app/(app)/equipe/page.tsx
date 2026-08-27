@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { representantesEscopo, aplicarEscopo } from "@/lib/auth/session";
+import { EscopoVazio } from "@/components/layout/EscopoVazio";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
@@ -98,19 +99,7 @@ export default async function EquipePage({
   const repsAlvo = aplicarEscopo(repsAlvoBruto, escopo);
 
   if (repsAlvo.length === 0) {
-    return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-6 space-y-3">
-            <h1 className="text-lg font-bold text-amber-900">Nenhum representante configurado para {mes.slice(0, 7)}</h1>
-            <p className="text-sm text-amber-800">
-              Rode <code>scripts/seed_metas_v1.mjs</code> (ou cadastre manualmente em <code>metas_representante</code>) pra
-              popular metas do período.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <EscopoVazio profile={profile} escopo={escopo} mes={mes} tela="A Visão Equipe" />;
   }
 
   const [{ data: metasRows }, { data: realizadoRows }, { data: clientesAgg }] = await Promise.all([

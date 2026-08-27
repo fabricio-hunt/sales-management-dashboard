@@ -5,6 +5,8 @@ import { requirePageAccess } from "@/lib/auth/permissions";
 import { representantesEscopo, aplicarEscopo } from "@/lib/auth/session";
 import { calcularComissao, type ComissaoFaixa } from "@/lib/comissao/calcular";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Alert } from "@/components/ui/alert";
+import { EscopoVazio } from "@/components/layout/EscopoVazio";
 
 export const revalidate = 0;
 
@@ -49,18 +51,7 @@ export default async function ComissoesPage() {
   const fmtPct = (v: number) => `${v.toFixed(2)}%`;
 
   if (repsAlvo.length === 0) {
-    return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-6 space-y-3">
-            <h1 className="text-lg font-bold text-amber-900">Nenhum representante no seu escopo para {mes.slice(0, 7)}</h1>
-            <p className="text-sm text-amber-800">
-              Se você é supervisor, peça ao Manager pra atribuir representantes em <code>/admin/permissoes</code>.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <EscopoVazio profile={profile} escopo={escopo} mes={mes} tela="A tela de Comissão/Premiação" />;
   }
 
   const [{ data: metasRows }, { data: realizadoRows }, { data: faixasRows }, { data: reps }] = await Promise.all([
@@ -100,12 +91,43 @@ export default async function ComissoesPage() {
 
   const totalGeral = linhas.reduce((s, l) => s + l.total, 0);
 
+  // Sem % de premiação cadastrado a fórmula inteira multiplica por zero e a tela
+  // mostra R$ 0,00 sem explicar nada — o usuário conclui que o sistema não calcula.
+  const semPercentual =
+    linhas.length > 0 &&
+    ((metasRows ?? []) as unknown as MetaRow[]).every(
+      (m) => Number(m.premiacao_pct_cx) === 0 && Number(m.premiacao_pct_fin) === 0
+    );
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader
         title="Comissão/Premiação"
         subtitle={`Estimativa calculada ao vivo a partir das faixas de atingimento — ${mes.slice(0, 7)}`}
       />
+
+      <Alert variant="aviso" titulo="Valores em validação — não use para pagamento ainda">
+        <p>
+          As <strong>faixas de atingimento</strong> usadas aqui (90% / 100% e seus fatores) são um rascunho
+          tirado da planilha original e <strong>ainda não foram confirmadas</strong>. O Manager ajusta em{" "}
+          <code>Faixas de Comissão</code>.
+        </p>
+        <p className="mt-1">
+          Esta tela também ainda <strong>não separa CLT de PJ</strong> nem calcula o{" "}
+          <strong>Prêmio de Positivação</strong> — os dois dependem de regras que ainda estão sendo
+          confirmadas. Hoje ela cobre o Prêmio por Caixa (por fornecedor) e o Prêmio Financeiro.
+        </p>
+      </Alert>
+
+      {semPercentual && (
+        <Alert variant="bloqueio" titulo="Os percentuais de premiação estão zerados">
+          <p>
+            Todas as metas deste mês estão com <code>% Caixas</code> e <code>% Financeiro</code> em zero, então
+            toda comissão sai R$ 0,00. Preencha em <code>Metas por Fornecedor</code> (ou importe a planilha de
+            metas) antes de conferir os valores.
+          </p>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>
