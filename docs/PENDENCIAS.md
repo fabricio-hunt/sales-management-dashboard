@@ -2,6 +2,78 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 27/08/2026 — parte 3 (deploy, redirect aberto, ajuda contextual, roteiro de aceitação):**
+>
+> **Deploy feito e verificado.** `master` foi fast-forward de `4d516d3` para `4f6a8f0` (10 commits) e a Vercel
+> publicou automaticamente pela integração do GitHub. Os dois riscos previstos foram descartados na prática:
+> o build remoto instalou o `xlsx` do `cdn.sheetjs.com` sem problema (40s, Ready), e o `proxy.ts` foi reconhecido
+> em produção — 7 rotas protegidas devolvem 307 pra `/login` com o `next` correto e `/login` devolve 200. O alias
+> de produção aponta pro deployment do push. Banco e código finalmente alinhados.
+>
+> ---
+>
+> **ACHADO DE SEGURANÇA: redirect aberto no `?next=` do login.** A guarda era
+> `redirect(next.startsWith("/") ? next : "/")`. Não basta: **`//evil.com` começa com `/`** e é uma URL
+> protocolo-relativa — o browser resolve como `https://evil.com`. Dava pra montar
+> `https://<dominio-real>/login?next=//site-falso`: a vítima vê o domínio legítimo, autentica e é jogada pra fora.
+> Phishing clássico, e o link inicial é verdadeiro. `/\evil.com` tem o mesmo efeito, porque vários browsers
+> normalizam a barra invertida antes de resolver. O mesmo padrão estava em `(app)/conta/actions.ts:47`, no campo
+> `proximo`.
+>
+> Corrigido em `lib/auth/redirecionamento.ts` (`caminhoInternoSeguro`), usado nos dois pontos. Rejeita
+> protocolo-relativo, barra invertida, esquema absoluto e caracteres de controle (que quebrariam o header
+> `Location`). Verificado caso a caso: `/equipe` e `/admin/usuarios?x=1` passam; `//evil.com`, `/\evil.com`,
+> `https://evil.com`, `javascript:...`, `"  //evil.com  "` e injeção de `\n` caem no padrão `/`.
+>
+> Nota de implementação: a classe de caracteres de controle está como comparação numérica de code point, **não**
+> como regex literal — escrever `[\x00-\x1F]` no fonte gravava bytes de controle invisíveis no arquivo, inclusive
+> um NUL. Se alguém "simplificar" pra regex depois, o problema volta.
+>
+> **Rota compartilhada com quem não tem permissão.** `requirePageAccess` fazia `redirect("/")` mudo: a pessoa caía
+> no Resumo Geral sem explicação e concluía que o link estava quebrado. Agora redireciona pra
+> `/?sem-acesso=<slug>` e o Resumo Geral mostra um aviso nomeando o módulo (label lido de `modulos`) e dizendo que
+> o link não está quebrado. O redirect continua sendo pra raiz de propósito — gatear a raiz criaria loop.
+>
+> ---
+>
+> **Ajuda contextual por módulo (pedido do cliente, referência VTEX/Semrush).** `lib/ajuda/conteudo.ts` tem um
+> verbete por slug de módulo, e `components/layout/AjudaModulo.tsx` renderiza "Como usar esta tela" abaixo do
+> título. `PageHeader` ganhou o prop opcional `ajuda`, e **25 telas** foram ligadas. Regra de conteúdo adotada:
+> cada verbete responde só o que o usuário não adivinha sozinho — o que a tela responde, **de onde vem o número**
+> e o erro de leitura mais provável. Nada de "clique aqui para filtrar", que ensina o usuário a ignorar o painel.
+>
+> Implementado com `<details>/<summary>` nativo, não com estado em React. Acessibilidade sai de graça, e a
+> preferência salva em `localStorage` é restaurada mutando o DOM num efeito — sem `setState`, que dispararia
+> `react-hooks/set-state-in-effect`. A primeira versão usava `useState` e **introduziu um quarto erro de lint**;
+> foi reescrita antes do commit. Fecha por padrão pra não empurrar o conteúdo da tela pra baixo da dobra.
+>
+> **`docs/roteiro-aceitacao.md`** — roteiro do teste de aceitação: checklist do nosso lado antes de enviar o
+> acesso, as três coisas a avisar ao cliente antes (comissão não é pra pagamento, CLT/PJ e Positivação fora do
+> cálculo, mês corrente sempre parcial), roteiro por papel, roteiro de segurança pra fazer junto com ele, e como
+> registrar o retorno separando "número errado" de "falta de recurso".
+>
+> ---
+>
+> **DADO: a base tem um mês só, e incompleto.** `periodos` tem 1 linha (Agosto/2026) e as 7443 vendas vão de
+> **03/08 a 20/08 — 14 dos 21 dias úteis, 67% do mês**. `vendas` com `origem = 'manual'` está em **0**, ou seja o
+> item 5 nunca rodou. Consequência pro teste de aceitação: o cliente vê todo mundo em ~67% da meta cheia e conclui
+> que a equipe vai mal ou que a conta está errada — nenhuma das duas. Pior, a faixa "Abaixo de 90%" é
+> proporcional, então **toda** comissão cai na pior banda. E evolução/faturamento mês a mês ficam com um ponto só.
+> **Importar os meses anteriores é pré-requisito do teste de aceitação**, não melhoria.
+>
+> **Pendente pra retomar, em ordem:**
+> 1. **Importar o restante de agosto e 2-3 meses anteriores.** Sem isso metade das telas não tem o que comparar.
+> 2. **Atribuir representantes ao Supervisor** — `supervisor_representantes` segue com 0 linhas.
+> 3. **Zerar as senhas dos 3 usuários** — todos com `senha_provisoria = false`, porque foram criados antes do
+>    código estar publicado. O fluxo de primeiro acesso **nunca disparou em produção**.
+> 4. **Item 5:** venda manual ponta a ponta.
+> 5. **Item 7:** as quatro perguntas de comissão (CLT/PJ, Positivação, somam ou excluem, limiares reais).
+> 6. **Item 8:** divergência 471 vs 485 do representante 90.
+> 7. Varredura de segurança: falta o que exige app logada — tentar Server Action forjada como vendedor e conferir
+>    vazamento por filtro/query param.
+> 8. Dívida menor: 3 erros pré-existentes de ESLint (`set-state-in-effect` em ComissoesClient:56,
+>    PermissoesClient:62, UsuariosClient:53).
+
 > **Atualização 27/08/2026 — parte 2 (resposta do cliente sobre comissão, vazamento de leitura anônima, manual de uso):**
 >
 > **O cliente respondeu sobre a comissão — mas mandou a ESTRUTURA, não os números.** Textual: (1) CLT ou PJ, dois
