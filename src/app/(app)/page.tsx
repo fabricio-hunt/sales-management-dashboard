@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Alert } from "@/components/ui/alert";
+import { createServerSupabase } from "@/lib/supabase/server";
 import {
   BarChart3,
   PieChart,
@@ -74,10 +76,37 @@ function HubSection({ title, icon: Icon, items }: { title: string; icon: React.E
   );
 }
 
-export default function DashboardHub() {
+export default async function DashboardHub({
+  searchParams,
+}: {
+  searchParams: Promise<{ "sem-acesso"?: string }>;
+}) {
+  // requirePageAccess redireciona pra ca com ?sem-acesso=<slug> quando alguem
+  // abre uma tela que o papel dele nao alcanca — tipicamente um link recebido
+  // de outra pessoa. Sem esse aviso o usuario so ve o Resumo Geral aparecer do
+  // nada e acha que o link esta quebrado.
+  const { "sem-acesso": semAcesso } = await searchParams;
+
+  let moduloNegado: string | null = null;
+  if (semAcesso) {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase.from("modulos").select("label").eq("slug", semAcesso).maybeSingle();
+    moduloNegado = data?.label ?? semAcesso;
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <PageHeader title="Resumo Geral" subtitle="Selecione um dos painéis abaixo para visualizar os indicadores comerciais." />
+      <PageHeader ajuda="dashboard" title="Resumo Geral" subtitle="Selecione um dos painéis abaixo para visualizar os indicadores comerciais." />
+
+      {moduloNegado && (
+        <Alert variant="bloqueio" titulo="Você não tem acesso a essa tela">
+          <p>
+            O link que você abriu leva para <strong>{moduloNegado}</strong>, e o seu perfil não tem permissão para
+            essa tela — por isso você foi trazido para o Resumo Geral. O link não está quebrado.
+          </p>
+          <p className="mt-1">Se precisar desse acesso, peça ao Manager para liberar em Permissões.</p>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <HubSection title="Dados Analíticos" icon={BarChart3} items={analiticos} />

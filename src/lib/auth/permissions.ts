@@ -57,7 +57,12 @@ export async function requirePageAccess(slug: string): Promise<Profile> {
 
   if (profile.role !== "manager") {
     const resolved = await getPermissoesResolvidas(profile);
-    if (!nivelAlcanca(resolved[slug], "visualizar")) redirect("/");
+    // Manda o motivo junto: sem isso, quem abre um link compartilhado de uma
+    // tela que nao pode ver cai no Resumo Geral sem explicacao nenhuma e conclui
+    // que o link esta quebrado.
+    if (!nivelAlcanca(resolved[slug], "visualizar")) {
+      redirect(`/?sem-acesso=${encodeURIComponent(slug)}`);
+    }
   }
   return profile;
 }
