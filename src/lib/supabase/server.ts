@@ -23,7 +23,7 @@ export async function createServerSupabase() {
             }
           } catch {
             // Server Component chamando setAll: ignorado, o middleware já
-            // renova a sessão a cada request (ver src/middleware.ts).
+            // renova a sessão a cada request (ver src/proxy.ts).
           }
         },
       },

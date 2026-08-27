@@ -5,8 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // precisa ser trocado via refresh token guardado nos cookies) e faz o gate
 // grosso de rota: sem sessão -> /login; com sessão em /login -> /.
 // O gate fino por módulo (quem pode ver o quê) fica em src/app/(app)/layout.tsx,
-// não aqui — middleware não deve depender de queries no banco a cada request.
-export async function middleware(request: NextRequest) {
+// não aqui — o proxy não deve depender de queries no banco a cada request.
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -107,7 +107,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 src/
-├── middleware.ts              # Session refresh + coarse route gate (redirects to /login)
+├── proxy.ts                   # Session refresh + coarse route gate (redirects to /login)
 ├── app/
 │   ├── login/                 # /login — email/senha (Supabase Auth), outside the (app) group
 │   ├── (app)/                 # Everything behind login shares this layout
