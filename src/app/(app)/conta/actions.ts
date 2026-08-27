@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { caminhoInternoSeguro } from "@/lib/auth/redirecionamento";
 import { revalidatePath } from "next/cache";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -44,7 +45,9 @@ export async function alterarSenha(_prev: ContaState, formData: FormData): Promi
   }
 
   revalidatePath("/", "layout");
-  if (proximo.startsWith("/")) redirect(proximo);
+  // Mesma correcao do /login: "//evil.com" passava pela guarda antiga.
+  const destino = caminhoInternoSeguro(proximo, "");
+  if (destino) redirect(destino);
   return { error: null, ok: "Senha alterada." };
 }
 

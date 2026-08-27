@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { caminhoInternoSeguro } from "@/lib/auth/redirecionamento";
 
 export type SignInState = { error: string | null };
 
@@ -19,7 +20,8 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
   }
 
   revalidatePath("/", "layout");
-  redirect(next.startsWith("/") ? next : "/");
+  // startsWith("/") sozinho deixava passar "//evil.com" (protocolo-relativo).
+  redirect(caminhoInternoSeguro(next));
 }
 
 export async function signOut() {
