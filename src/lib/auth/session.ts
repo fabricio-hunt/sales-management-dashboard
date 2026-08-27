@@ -9,6 +9,7 @@ export type Profile = {
   role: UserRole;
   representante_id: string | null;
   ativo: boolean;
+  senha_provisoria: boolean;
 };
 
 // cache() dedupa entre os vários pontos de uma mesma request (layout + página
@@ -20,11 +21,20 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, nome, role, representante_id, ativo")
+    .select("id, nome, role, representante_id, ativo, senha_provisoria")
     .eq("id", user.id)
     .maybeSingle();
+
+  // Sem isso o erro some: quem chama trata null como "não logado" e manda pro
+  // /login, o middleware vê a sessão válida e devolve pra "/" — loop de
+  // redirect sem nenhuma pista no log. Foi assim que a recursão de RLS da v2
+  // passou despercebida (ver supabase_migration_v2_2.sql).
+  if (error) {
+    console.error("[auth] falha ao ler profiles:", error.code, error.message);
+    return null;
+  }
 
   if (!profile || !profile.ativo) return null;
   return profile as Profile;

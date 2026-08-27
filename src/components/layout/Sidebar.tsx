@@ -185,13 +185,19 @@ export function Sidebar({
 
         <div className="p-3 border-t border-border shrink-0">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0">
-              {profile.nome.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-medium text-foreground truncate">{profile.nome}</span>
-              <span className="text-xs text-muted-foreground">{ROLE_LABEL[profile.role]}</span>
-            </div>
+            <Link
+              href="/conta"
+              title="Minha conta"
+              className="flex items-center gap-3 overflow-hidden rounded-md p-1 -m-1 transition-colors hover:bg-muted"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0">
+                {profile.nome.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-medium text-foreground truncate">{profile.nome}</span>
+                <span className="text-xs text-muted-foreground">{ROLE_LABEL[profile.role]}</span>
+              </div>
+            </Link>
             <form action={signOut} className="ml-auto">
               <button type="submit" title="Sair" className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors">
                 <LogOut className="w-4 h-4" />

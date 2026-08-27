@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react"
 import { createBrowserSupabase } from "@/lib/supabase/client"
-import { createUsuario, updateUsuario, deleteUsuario, setSupervisorRepresentantes } from "./actions"
+import { createUsuario, updateUsuario, deleteUsuario, resetarSenha, setSupervisorRepresentantes } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Plus, Trash2, Save, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, Trash2, Save, ChevronDown, ChevronUp, KeyRound } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
 
 type Role = "manager" | "supervisor" | "vendedor"
-type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean }
+type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean; senha_provisoria: boolean }
 type Representante = { id: string; nome: string }
 
 const ROLE_LABEL: Record<Role, string> = { manager: "Manager", supervisor: "Supervisor", vendedor: "Vendedor" }
@@ -30,10 +30,13 @@ export default function UsuariosAdminPage() {
   const [form, setForm] = useState(emptyForm)
   const [criando, setCriando] = useState(false)
   const [expandido, setExpandido] = useState<string | null>(null)
+  const [resetando, setResetando] = useState<string | null>(null)
+  const [novaSenha, setNovaSenha] = useState("")
+  const [salvandoReset, setSalvandoReset] = useState(false)
 
   async function load() {
     const [{ data: users }, { data: reps }, { data: sup }] = await Promise.all([
-      supabase.from("profiles").select("id, nome, role, representante_id, ativo").order("nome"),
+      supabase.from("profiles").select("id, nome, role, representante_id, ativo, senha_provisoria").order("nome"),
       supabase.from("representantes").select("id, nome").order("id"),
       supabase.from("supervisor_representantes").select("supervisor_id, representante_id"),
     ])
@@ -95,6 +98,30 @@ export default function UsuariosAdminPage() {
       setUsuarios((prev) => prev.filter((u) => u.id !== id))
     } catch (err) {
       toast.error("Erro ao excluir: " + (err instanceof Error ? err.message : String(err)))
+    }
+  }
+
+  const abrirReset = (id: string) => {
+    setNovaSenha("")
+    setResetando(resetando === id ? null : id)
+  }
+
+  const confirmarReset = async (u: Usuario) => {
+    if (novaSenha.length < 6) {
+      toast.error("A senha precisa ter pelo menos 6 caracteres")
+      return
+    }
+    setSalvandoReset(true)
+    try {
+      await resetarSenha({ id: u.id, password: novaSenha })
+      toast.success(`Senha de ${u.nome} redefinida. Ele troca no próximo acesso.`)
+      setResetando(null)
+      setNovaSenha("")
+      load()
+    } catch (err) {
+      toast.error("Erro: " + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setSalvandoReset(false)
     }
   }
 
@@ -192,7 +219,19 @@ export default function UsuariosAdminPage() {
               usuarios.map((u) => (
                 <React.Fragment key={u.id}>
                   <TableRow className="hover:bg-muted/40">
-                    <TableCell><Input value={u.nome} onChange={(e) => updateLocal(u.id, "nome", e.target.value)} className="h-8 w-40" /></TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Input value={u.nome} onChange={(e) => updateLocal(u.id, "nome", e.target.value)} className="h-8 w-40" />
+                        {u.senha_provisoria && (
+                          <span
+                            title="Ainda não trocou a senha inicial — só consegue entrar passando pela tela de troca."
+                            className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700"
+                          >
+                            senha provisória
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <select
                         value={u.role}
@@ -232,10 +271,38 @@ export default function UsuariosAdminPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button size="icon" className="h-8 w-8" onClick={() => salvarUsuario(u)}><Save className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="ghost" title="Redefinir senha" className="h-8 w-8" onClick={() => abrirReset(u.id)}><KeyRound className="w-3.5 h-3.5" /></Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(u.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
+                  {resetando === u.id && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="bg-muted/30">
+                        <div className="flex flex-wrap items-end gap-3 p-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Nova senha para {u.nome}</Label>
+                            <Input
+                              type="text"
+                              value={novaSenha}
+                              onChange={(e) => setNovaSenha(e.target.value)}
+                              className="h-8 w-48"
+                              placeholder="mín. 6 caracteres"
+                              autoFocus
+                            />
+                          </div>
+                          <Button size="sm" disabled={salvandoReset} onClick={() => confirmarReset(u)}>
+                            <KeyRound className="w-3.5 h-3.5 mr-1" /> {salvandoReset ? "Redefinindo..." : "Redefinir"}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setResetando(null)}>Cancelar</Button>
+                          <p className="text-xs text-muted-foreground">
+                            Anote e entregue à pessoa: ela vai precisar dessa senha uma vez e trocará por outra no
+                            primeiro acesso.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {u.role === "supervisor" && expandido === u.id && (
                     <TableRow>
                       <TableCell colSpan={5} className="bg-muted/30">
