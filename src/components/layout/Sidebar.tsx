@@ -23,6 +23,7 @@ import {
   UserCog,
   Percent,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/app/login/actions";
@@ -183,7 +184,21 @@ export function Sidebar({
           ))}
         </nav>
 
-        <div className="p-3 border-t border-border shrink-0">
+        <div className="p-3 border-t border-border shrink-0 space-y-1">
+          {/* Fora do filtro de permissões de propósito: manual de uso é como
+              /conta — todo mundo precisa alcançar, não é módulo revogável. */}
+          <Link
+            href="/docs"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150 group text-sm ${pathname === "/docs"
+                ? "bg-accent text-accent-foreground font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+          >
+            <BookOpen className={`w-4 h-4 transition-colors ${pathname === "/docs" ? "text-accent-foreground" : "group-hover:text-foreground"}`} />
+            Manual de Uso
+          </Link>
+
           <div className="flex items-center gap-3 px-2 py-2">
             <Link
               href="/conta"
