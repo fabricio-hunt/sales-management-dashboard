@@ -37,7 +37,15 @@ export async function deleteCliente(id: string) {
 
 // ─── Representantes ───
 
-export async function upsertRepresentante(payload: { id: string; nome: string; supervisor: string | null }) {
+// regime (CLT/PJ) veio da resposta do cliente em 27/08: existem dois formatos de
+// comissão. Aqui é só cadastro — nenhum cálculo olha pra esse campo ainda,
+// porque o cliente não informou o que muda entre os dois (ver PENDENCIAS item 7).
+export async function upsertRepresentante(payload: {
+  id: string;
+  nome: string;
+  supervisor: string | null;
+  regime: "clt" | "pj" | null;
+}) {
   await requirePermission("admin.representantes", "editar");
   const { error } = await supabaseAdmin.from("representantes").upsert(payload, { onConflict: "id" });
   if (error) throw new Error(error.message);
