@@ -2,6 +2,66 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 27/08/2026 (v2.2/v2.3 — login quebrado em produção, conta do usuário):**
+>
+> **Achado grave: o login estava inutilizável desde o deploy da v2 (26/08).** A policy de SELECT de `profiles`
+> criada na v2 testava "sou manager?" com `EXISTS (SELECT 1 FROM public.profiles me ...)`. O Postgres reaplica a
+> policy de `profiles` a esse subselect e aborta com `42P17 infinite recursion detected in policy for relation
+> "profiles"` — o comentário da v2 dizendo "seguro aqui pois não há recursão" estava **errado**. Efeito em
+> cadeia: `getCurrentProfile()` recebia o erro, **descartava** (`const { data } =`, sem checar `error`), devolvia
+> `null`, o layout mandava pra `/login`, o middleware via a sessão válida e devolvia pra `/` → loop infinito
+> (`ERR_TOO_MANY_REDIRECTS`). O login "funcionava" (o Auth não toca em `profiles`), mas nenhuma página abria.
+> `permissoes_usuario` e `supervisor_representantes` tinham o mesmo padrão e o mesmo erro; `vendas`/`clientes`
+> escaparam porque passam por `pode_ver_representante()`, que é `SECURITY DEFINER`.
+> **`supabase_migration_v2_2.sql` (rodada em produção)** move o teste pra `public.is_manager()`, `SECURITY
+> DEFINER`. `getCurrentProfile()` agora loga o erro em vez de engolir — foi o `error` descartado que escondeu
+> isso por um dia inteiro.
+>
+> **Item 10 fechado — como o vendedor recebe a senha.** Decidido: não há SMTP no projeto (o default do Supabase é
+> limitado e só serve pra desenvolvimento), então **o manager gera uma senha padrão e pede pra pessoa redefinir**.
+> `supabase_migration_v2_3.sql` adiciona `profiles.senha_provisoria` (default `false`, pra não arrastar as contas
+> existentes). Enquanto a flag estiver `true`, `(app)/layout.tsx` prende o usuário em `/trocar-senha` — que fica
+> **fora** do grupo `(app)` de propósito, senão o layout rodaria nela e criaria o mesmo formato de loop do 42P17.
+> Entrou junto `/conta` (troca de nome de exibição e de senha pelo próprio usuário, sem passar pela matriz de
+> permissões) e um botão **Redefinir senha** em `/admin/usuarios`, que religa a flag — essa era a única saída pra
+> quem esquecer a senha, já que sem SMTP não existe "esqueci minha senha".
+>
+> **Itens 2, 3, 4 e 10 concluídos.** Manager criado, Supervisor e Vendedor de teste criados, troca forçada de
+> senha testada ponta a ponta. Escopo de RLS validado **por query direta no PostgREST**, não só na tela: manager
+> 7443/7443 vendas, vendedor 308 com 2352 vendas e **0 linhas fora do próprio representante**, 121 clientes de
+> 471. É prova de que nem forjando request fora da app o vendedor alcança dado alheio.
+>
+> **Também nesta sessão:** `middleware.ts` → `proxy.ts` (deprecação do Next 16.3.2, via codemod oficial; só o
+> nome da função mudou, gate e matcher idênticos, redirects reconferidos). E `xlsx` 0.18.5 → **0.20.3 pelo CDN do
+> SheetJS** — o pacote no npm está abandonado e a vuln high (prototype pollution + ReDoS) não tinha correção lá.
+> `npm audit` agora zerado. **Atenção: o build da Vercel passa a precisar de acesso a `cdn.sheetjs.com`.**
+> Revalidado contra o Excel real: 52062 linhas nominais, 7443 com `Seq` (idêntico ao banco), 7 representantes.
+>
+> **Pendente pra retomar, em ordem:**
+> 1. **Atribuir representantes ao Supervisor de teste** — `supervisor_representantes` está **vazio**, o passo não
+>    salvou. Por isso ele enxerga 0 vendas. Sem isso o item 4 fica testado pela metade (provou-se que vendedor não
+>    vaza, não que supervisor vê exatamente os dois atribuídos).
+> 2. **Deploy:** nada da sessão de 27/08 foi publicado. Está tudo no branch `fix/rls-recursao-e-conta-usuario`
+>    (4 commits), sem push. O banco de produção **já** tem as migrations v2.2/v2.3 — ou seja, o banco está à
+>    frente do código publicado.
+> 3. **Item 5:** lançar venda de teste em `/admin/vendas` e confirmar reflexo em `/equipe`/rankings. Nunca foi
+>    exercitado ponta a ponta.
+> 4. **Decisões da matriz de permissões (item 6)** — ver as duas inconsistências levantadas no bloco abaixo.
+> 5. Confirmar com o cliente os percentuais das faixas de comissão (item 7, ainda placeholder — se ele abrir
+>    `/comissoes` vai ver número inventado).
+> 6. Decidir a divergência 471 vs 485 do representante 90 (item 8).
+> 7. Dívida menor: erro pré-existente de ESLint em `UsuariosClient.tsx:53` (`react-hooks/set-state-in-effect`).
+>
+> **Matriz de permissões — estado real do banco em 27/08 e duas inconsistências:**
+> Vendedor vê: `/`, `/equipe`, `/comissoes` e **`/admin/vendas` com nível `editar`**. Supervisor vê tudo de
+> Dashboard + Dados Analíticos + Rankings + Distribuição, e **nada** de `admin.*`. Zero overrides por usuário.
+> - **(a)** `admin.vendas` está no grupo "Uso Interno", então o vendedor **vê sim** um item sob "Uso Interno" na
+>   Sidebar ("Lançar Venda"). Está correto em permissão, mas o agrupamento confunde — vale mover esse módulo pra
+>   um grupo voltado ao vendedor em vez de deixá-lo sob um rótulo que sugere área administrativa.
+> - **(b)** O Supervisor **não** consegue abrir `/admin/vendas` (`nivel = nenhum`), mas a feature foi construída
+>   prevendo que "Manager/Supervisor podem escolher o representante" ao lançar (ver bloco de 26/08). A matriz
+>   contradiz o desenho da feature — decidir qual dos dois está certo.
+
 > **Atualização 26/08/2026 (v2 — deploy):** commit/push feito, deploy automático na Vercel confirmado em produção
 > (`sales-management-dashboard-gules.vercel.app`). Corrigido um bloqueio real encontrado nessa checagem:
 > `SUPABASE_SERVICE_ROLE_KEY` não existia nas Environment Variables da Vercel — sem ela nenhuma Server
