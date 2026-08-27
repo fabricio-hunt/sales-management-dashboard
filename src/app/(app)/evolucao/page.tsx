@@ -6,7 +6,7 @@ export default async function EvolucaoPage() {
   await requirePageAccess("evolucao");
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Evolução por Cliente" subtitle="Histórico de compras mês a mês desde Jan/2024." />
+      <PageHeader ajuda="evolucao" title="Evolução por Cliente" subtitle="Histórico de compras mês a mês desde Jan/2024." />
 
       <Card>
         <CardHeader>

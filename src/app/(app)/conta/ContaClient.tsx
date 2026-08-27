@@ -31,7 +31,7 @@ export default function ContaClient({ nome, email, role }: { nome: string; email
 
   return (
     <div className="mx-auto flex max-w-[700px] flex-col gap-6 p-6">
-      <PageHeader title="Minha conta" subtitle="Altere seu nome de exibição e sua senha de acesso." />
+      <PageHeader ajuda="conta" title="Minha conta" subtitle="Altere seu nome de exibição e sua senha de acesso." />
 
       <Card>
         <CardHeader>

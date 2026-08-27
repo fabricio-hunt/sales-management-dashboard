@@ -95,7 +95,7 @@ export default async function ProdutosPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="produtos"
         title="Curva ABC de Produtos"
         subtitle={`Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa prática de gestão comercial pra distribuidoras. ${mes.slice(0, 7)}`}
       />

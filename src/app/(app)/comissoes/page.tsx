@@ -101,7 +101,7 @@ export default async function ComissoesPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="comissoes"
         title="Comissão/Premiação"
         subtitle={`Estimativa calculada ao vivo a partir das faixas de atingimento — ${mes.slice(0, 7)}`}
       />

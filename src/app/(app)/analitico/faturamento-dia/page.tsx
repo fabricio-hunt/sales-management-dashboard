@@ -57,7 +57,7 @@ export default async function FaturamentoDiaPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <PageHeader title="Faturamento Diário" subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`} />
+      <PageHeader ajuda="analitico.faturamento_dia" title="Faturamento Diário" subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`} />
 
       <KpiGrid>
         <KpiCard label="Total do mês" value={fmtCurShort(totalMes)} hint={fmtCur(totalMes)} />

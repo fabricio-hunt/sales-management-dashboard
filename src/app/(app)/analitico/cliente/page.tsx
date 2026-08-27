@@ -51,7 +51,7 @@ export default async function AnaliticoClientePage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Analítico Cliente" subtitle={`Venda e devolução por cliente — ${mes.slice(0, 7)}`} />
+      <PageHeader ajuda="analitico.cliente" title="Analítico Cliente" subtitle={`Venda e devolução por cliente — ${mes.slice(0, 7)}`} />
 
       <ChartCard title="Top 10 clientes por faturamento" isEmpty={chartData.length === 0}>
         <CategoryBarChart data={chartData} format="currency-compact" />

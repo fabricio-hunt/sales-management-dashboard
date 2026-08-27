@@ -118,7 +118,7 @@ export default function ComissoesAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.comissoes"
         title="Faixas de Comissão"
         subtitle="Configure as faixas de atingimento que definem o fator de comissão aplicado sobre o financeiro/positivação realizados. Percentuais de premiação por fornecedor ficam em /admin/metas."
       />

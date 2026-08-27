@@ -192,7 +192,7 @@ export default function VendasClient({
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1100px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.vendas"
         title="Lançamento de Vendas"
         subtitle="Cadastre vendas avulsas manualmente — entram direto no cálculo de positivação, financeiro e comissão, sem depender do import mensal."
       />

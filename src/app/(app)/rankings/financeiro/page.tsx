@@ -51,7 +51,7 @@ export default async function RankingFinanceiroPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Ranking Financeiro" subtitle={`Faturamento líquido por representante — ${mes.slice(0, 7)}`} />
+      <PageHeader ajuda="rankings.financeiro" title="Ranking Financeiro" subtitle={`Faturamento líquido por representante — ${mes.slice(0, 7)}`} />
 
       <ChartCard title="Faturamento por representante" isEmpty={chartData.length === 0}>
         <CategoryBarChart data={chartData} format="currency-compact" color="#10B981" />

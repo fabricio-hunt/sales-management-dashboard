@@ -46,7 +46,7 @@ export default async function DistribuicaoPage() {
 
   return (
     <div className="p-6 max-w-[1500px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="distribuicao"
         title="Resumo Distribuição"
         subtitle={`Clientes distintos positivados por representante × fornecedor — ${mes.slice(0, 7)}`}
       />

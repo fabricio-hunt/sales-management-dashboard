@@ -48,7 +48,7 @@ export default async function AnaliticoVendasPage({
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="analitico.vendas"
         title="Analítico de Vendas"
         subtitle={`Extrato detalhado por nota — ${mes.slice(0, 7)} — ${count ?? 0} registro(s)`}
       />

@@ -100,6 +100,14 @@ export default async function ManualPage() {
         </Alert>
       )}
 
+      <Alert variant="ok" titulo="Ajuda dentro de cada tela">
+        <p>
+          Além deste manual, cada tela tem um botão <strong>Como usar esta tela</strong> logo abaixo do título. Ele
+          explica o que aquela tela responde, de onde vem cada número e o erro de leitura mais comum. Fica fechado
+          por padrão e lembra a sua escolha.
+        </p>
+      </Alert>
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">

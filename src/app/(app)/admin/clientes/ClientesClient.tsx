@@ -162,7 +162,7 @@ export default function ClientesAdminPage() {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <PageHeader
+      <PageHeader ajuda="admin.clientes"
         title="Gestão de Clientes"
         subtitle="Adicione, edite ou remova clientes manualmente. Representante/status atribuídos aqui não são sobrescritos pela importação."
       />

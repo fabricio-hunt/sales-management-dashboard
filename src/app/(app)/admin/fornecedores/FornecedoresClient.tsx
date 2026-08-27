@@ -100,7 +100,7 @@ export default function FornecedoresAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1100px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.fornecedores"
         title="Fornecedores"
         subtitle="Nome fantasia usado nas telas de metas/rankings + o mapeamento de razão social do ERP pra cada um."
       />

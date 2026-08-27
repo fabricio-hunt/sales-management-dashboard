@@ -54,7 +54,7 @@ export default async function DevolucoesPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Devoluções de Vendas" subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`} />
+      <PageHeader ajuda="analitico.devolucoes" title="Devoluções de Vendas" subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`} />
 
       <KpiGrid>
         <KpiCard label="Total devolvido" value={fmtCur(totalDevolucao)} />

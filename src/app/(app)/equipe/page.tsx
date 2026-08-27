@@ -226,7 +226,7 @@ export default async function EquipePage({
   return (
     <div className="p-4 md:p-6 max-w-[1700px] mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <PageHeader
+      <PageHeader ajuda="equipe"
         title={regiaoLabel}
         subtitle={`Período: ${periodo.data_inicio} a ${periodo.data_fim}`}
         backHref={repFiltro ? "/equipe" : undefined}

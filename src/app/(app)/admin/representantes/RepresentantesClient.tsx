@@ -87,7 +87,7 @@ export default function RepresentantesAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1000px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.representantes"
         title="Gestão de Representantes (RPA)"
         subtitle='O ID deve bater com o código usado na coluna "Representante" do ERP (ex: 308).'
       />

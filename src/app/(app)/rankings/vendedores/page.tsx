@@ -54,7 +54,7 @@ export default async function RankingVendedoresPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Top 10 Vendedores" subtitle={`Ranking dos vendedores com melhor desempenho financeiro — ${mes.slice(0, 7)}`} />
+      <PageHeader ajuda="rankings.vendedores" title="Top 10 Vendedores" subtitle={`Ranking dos vendedores com melhor desempenho financeiro — ${mes.slice(0, 7)}`} />
 
       <ChartCard title="Faturamento — top 10" isEmpty={chartData.length === 0}>
         <CategoryBarChart data={chartData} format="currency-compact" color="#10B981" />

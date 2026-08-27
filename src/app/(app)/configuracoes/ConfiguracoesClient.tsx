@@ -47,7 +47,7 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[700px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="configuracoes"
         title="Configurações — Período"
         subtitle="Substitui o objeto PERIODO fixo no código — cadastre aqui todo início de mês."
       />

@@ -186,7 +186,7 @@ export default function MetasAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1300px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.metas"
         title="Metas por Representante × Fornecedor"
         subtitle="Substitui os hardcodes de metas — edite mês a mês sem precisar de redeploy."
       />

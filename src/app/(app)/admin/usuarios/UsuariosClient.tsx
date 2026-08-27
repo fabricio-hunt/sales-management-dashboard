@@ -144,7 +144,7 @@ export default function UsuariosAdminPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[1100px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
+      <PageHeader ajuda="admin.usuarios"
         title="Usuários"
         subtitle="Cadastro de Managers, Supervisores e Vendedores. Permissões por módulo ficam em /admin/permissoes."
       />

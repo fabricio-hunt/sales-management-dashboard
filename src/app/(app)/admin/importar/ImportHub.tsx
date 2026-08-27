@@ -62,7 +62,7 @@ export default function ImportHub({ recentImports }: { recentImports: ImportLogR
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto">
-      <PageHeader
+      <PageHeader ajuda="admin.importar"
         title="Importação de Dados"
         subtitle="Cada tipo de dado tem sua própria importação, independente das outras — suba só o que precisar atualizar."
       />
