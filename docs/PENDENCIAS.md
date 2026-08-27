@@ -2,6 +2,106 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 27/08/2026 — parte 2 (resposta do cliente sobre comissão, vazamento de leitura anônima, manual de uso):**
+>
+> **O cliente respondeu sobre a comissão — mas mandou a ESTRUTURA, não os números.** Textual: (1) CLT ou PJ, dois
+> formatos diferenciados; (2) premiações por 2.1 Positivação, 2.2 caixa vendida por empresa, 2.3 Financeiro; (3) a
+> venda é realizada pelo Palmtop. Confronto com o que o código faz hoje:
+>
+> | Cliente disse | Hoje | Situação |
+> |---|---|---|
+> | 2.2 caixa por empresa | `metas.premiacao_pct_cx` por representante × fornecedor | já é exatamente isso |
+> | 2.3 Financeiro | `metas.premiacao_pct_fin` | já existe |
+> | 2.1 Positivação | `metas_representante.premiacao_pct_positivacao_base` existe desde a v1 e **nunca é lida** | não entra no cálculo |
+> | 1. CLT/PJ | não existia em lugar nenhum | campo criado na v2.4; **cálculo não diferencia** |
+> | 3. Palmtop | `vendas.origem` já separa `manual` do importado | lançamento manual é caminho de exceção/correção |
+>
+> **O item 7 continua aberto.** Falta perguntar ao cliente: o que muda entre CLT e PJ (percentual? faixa? só um dos
+> três prêmios?), como o Prêmio de Positivação é calculado (valor por cliente positivado? % sobre o quê?), se os três
+> prêmios somam ou são excludentes, e os limiares/fatores reais das faixas — os 90%/100% de hoje foram inferidos da
+> planilha, não confirmados.
+>
+> ---
+>
+> **ACHADO DE SEGURANÇA: leitura sem login em 7 tabelas.** As policies da v1 foram criadas como
+> `FOR SELECT USING (true)` **sem cláusula `TO`**. Sem `TO`, a policy vale pra `PUBLIC`, o que inclui o role `anon` —
+> e a publishable key vai no bundle do browser. Verificado contra o PostgREST de produção **sem nenhum token de
+> sessão**:
+>
+> ```
+> representantes       206  7 linhas
+> produtos             206  253 linhas
+> fornecedores         206  28 linhas
+> periodos             206  1 linha
+> metas                206  175 linhas   <-- % de premiação por rep x fornecedor
+> metas_representante  206  7 linhas     <-- objetivo de positivação e taxas-base
+> import_log           206  2 linhas
+> vendas / clientes / profiles / modulos / permissoes_role / comissao_faixas  ->  0 linhas
+> ```
+>
+> `vendas` e `clientes` escaparam porque a v2 os recriou com `TO authenticated`; o problema é só o legado da v1.
+> **`metas`/`metas_representante` são o pior caso: dado de remuneração da equipe exposto sem autenticação nenhuma** —
+> e é justamente o que o cliente vai começar a preencher de verdade agora. As **views** foram conferidas e estão OK
+> (todas com `security_invoker = true` desde a v2, então herdam o RLS das tabelas).
+>
+> **`supabase_migration_v2_4.sql` (PENDENTE DE EXECUÇÃO)** corrige: dimensões passam a `TO authenticated`, e
+> `metas`/`metas_representante` passam a `pode_ver_representante()` — mesmo escopo de vendas/clientes, então vendedor
+> não lê mais o percentual de comissão do colega. Conferido que isso **não muda nenhuma tela**: rankings e
+> `/distribuicao` leem metas sem filtro, mas cruzam com views já escopadas, então as linhas fora de escopo nunca
+> apareciam mesmo. `import_log` ficou em `TO authenticated` (e não `is_manager()`) de propósito: `/admin/importar` já
+> é gateada por `requirePageAccess`, e o Manager pode delegar esse módulo a um supervisor — `is_manager()` faria o
+> histórico sumir da tela sem erro nenhum.
+>
+> **A v2.4 também fecha as duas inconsistências da matriz (item 6), ambas decididas nesta sessão:**
+> **(a)** `modulos.grupo` de `admin.vendas` era "Uso Interno" enquanto a Sidebar sempre o mostrou sob "Dashboard"
+> — alinhado pro banco bater com a tela. **(b)** Supervisor **ganhou** `admin.vendas = editar`: a tela foi
+> construída prevendo "Manager/Supervisor escolhem o representante", e como a venda real vem do Palmtop, o
+> lançamento manual é caminho de correção — que é o trabalho do supervisor. O escopo dele segue limitado por RLS.
+>
+> ---
+>
+> **`/docs` era uma página de pitch comercial interno que o cliente conseguia abrir.** Título "Documentação & Pitch",
+> com um card literalmente chamado "O que falar para o cliente" e outro "Ofereça essas expansões para seus clientes".
+> Era a **única rota de `(app)` sem `requirePageAccess`**, fora da Sidebar e fora da tabela `modulos` — bastava
+> digitar `/docs`. Gatear por papel não resolveria: o cliente **é** o manager. O conteúdo foi movido pra
+> `docs/pitch-comercial.md` (fora da aplicação) e a rota foi reescrita como **Manual de Uso** do cliente: primeiro
+> acesso e senha, quem enxerga o quê, as telas uma a uma, rotina mensal de importação, como a comissão é calculada
+> (com o que ainda não entra nela), segurança e um guia de "se algo não funcionar". Continua sem `requirePageAccess`
+> de propósito — manual é como `/conta`, não é módulo revogável. Link fixo no rodapé da Sidebar.
+>
+> **Avisos de uso (pedido explícito).** Novo `components/ui/alert.tsx` com quatro variantes (`info`, `aviso`,
+> `bloqueio`, `ok`) e `components/layout/EscopoVazio.tsx`, que explica tela vazia **por papel**. Dois textos
+> enganosos foram corrigidos no caminho:
+> - `/equipe` mandava o **usuário final** rodar `scripts/seed_metas_v1.mjs` e editar a tabela `metas_representante`.
+> - `/comissoes` mandava pedir atribuição de representantes em `/admin/permissoes` — o lugar certo é **Usuários**.
+>
+> `/comissoes` ganhou dois avisos: um fixo dizendo que as faixas são rascunho e que CLT/PJ e Positivação ainda não
+> entram no cálculo, e um condicional que aparece quando todos os `premiacao_pct` do mês estão zerados (a tela
+> mostrava R$ 0,00 sem explicar). `/admin/representantes` ganhou o seletor **Regime de contratação (CLT/PJ)**.
+>
+> **Pendente pra retomar, em ordem:**
+> 1. **Rodar `supabase_migration_v2_4.sql` em produção** — é o que fecha a leitura anônima. Enquanto não rodar, os
+>    percentuais de premiação seguem legíveis sem login.
+> 2. **Atribuir representantes ao Supervisor de teste** — `supervisor_representantes` continua **vazio**, o passo
+>    nunca salvou. Sem isso o item 4 fica testado pela metade.
+> 3. **Deploy:** nada de 27/08 foi publicado. O banco de produção está à frente do código publicado.
+> 4. **Item 5:** lançar venda de teste em `/admin/vendas` e confirmar reflexo em `/equipe`/rankings.
+> 5. **Item 7:** as quatro perguntas de comissão acima, para o cliente.
+> 6. **Item 8:** divergência 471 vs 485 do representante 90.
+> 7. Varredura de segurança completa de rotas (o que já foi conferido está abaixo).
+> 8. Dívida menor: erro pré-existente de ESLint em `UsuariosClient.tsx:53`.
+>
+> **Varredura de segurança — o que já foi conferido nesta sessão:**
+> - Todas as 5 rotas de `/api/admin/import/*` chamam `requirePermission("admin.importar", "editar")`. OK.
+> - `/api/download-template` não tem guarda, mas só emite planilha de cabeçalho vazio e está atrás do gate do proxy.
+> - `/admin/usuarios` e `/admin/permissoes` são manager-only na própria página, não só nas actions. OK.
+> - `/` (raiz) não tem `requirePageAccess` — é intencional e **necessário**: `requirePageAccess` redireciona pra `/`
+>   quando nega, então gatear a raiz criaria loop de redirect. Consequência: quem tiver `dashboard = nenhum` perde o
+>   link na Sidebar mas ainda abre a raiz digitando a URL. Decidir se isso importa.
+> - Não existe **nenhuma** policy de INSERT/UPDATE/DELETE em nenhuma tabela — com RLS ligado, isso nega escrita por
+>   padrão pela chave publishable. Toda escrita passa por `supabaseAdmin` em Server Action/route guardada. É o
+>   desenho certo, registrado aqui pra não ser "corrigido" por engano depois.
+
 > **Atualização 27/08/2026 (v2.2/v2.3 — login quebrado em produção, conta do usuário):**
 >
 > **Achado grave: o login estava inutilizável desde o deploy da v2 (26/08).** A policy de SELECT de `profiles`
