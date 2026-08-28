@@ -7,6 +7,7 @@ import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
+import DevolucaoManager from "./DevolucaoManager";
 
 export const revalidate = 0;
 
@@ -16,10 +17,25 @@ function mesAtual() {
 }
 
 export default async function DevolucoesPage() {
-  await requirePageAccess("analitico.devolucoes");
+  const profile = await requirePageAccess("analitico.devolucoes");
   const supabase = await createServerSupabase();
   const mes = mesAtual();
   const { data: periodo } = await supabase.from("periodos").select("*").eq("mes", mes).maybeSingle();
+
+  const podeGerenciar = profile.role === "manager";
+  const [{ data: representantes }, { data: clientes }, { data: devolucoesManuais }] = podeGerenciar
+    ? await Promise.all([
+        supabase.from("representantes").select("id, nome").order("id"),
+        supabase.from("clientes").select("id, razao_social, fantasia").eq("status", "ativo").order("fantasia"),
+        supabase
+          .from("vendas")
+          .select("id, pedido_nr, data_venda, cliente_id, representante_id, devolucao, motivo_devolucao, created_at")
+          .eq("origem", "manual")
+          .eq("qtde", 0)
+          .order("created_at", { ascending: false })
+          .limit(200),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
 
   const { data: rows } = periodo
     ? await supabase
@@ -98,6 +114,14 @@ export default async function DevolucoesPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {podeGerenciar && (
+        <DevolucaoManager
+          representantes={representantes ?? []}
+          clientes={clientes ?? []}
+          devolucoesIniciais={devolucoesManuais ?? []}
+        />
+      )}
     </div>
   );
 }

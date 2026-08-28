@@ -79,9 +79,13 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
 
   "analitico.devolucoes": {
     resumo: "O que voltou, de quem e por quê.",
-    passos: ["Procure repetição do mesmo produto ou do mesmo cliente."],
+    passos: [
+      "Procure repetição do mesmo produto ou do mesmo cliente.",
+      "Manager: use o formulário no fim da tela pra registrar, editar ou excluir uma devolução lançada manualmente.",
+    ],
     fonte: "Identificado pela transação de devolução na base importada.",
-    atencao: "A devolução abate o realizado, então também afeta atingimento e comissão do período.",
+    atencao:
+      "A devolução abate o realizado, então também afeta atingimento e comissão do período. Só devoluções lançadas manualmente por aqui podem ser editadas: as vindas do import do ERP são só-leitura, porque seriam sobrescritas no reimport do mês.",
   },
 
   produtos: {
