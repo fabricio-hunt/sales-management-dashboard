@@ -56,6 +56,61 @@ Ver `supabase_migration_v1.sql` (raiz do projeto) pra o DDL completo — inclui 
 
 ## Segurança (RLS)
 
-Leitura (`SELECT`) é pública em todas as tabelas — a v1 não tem login. Escrita (`INSERT`/`UPDATE`/`DELETE`) não tem
-policy pro role `anon`: toda escrita passa pela service role key, usada só server-side (Route Handlers e Server
-Actions em `src/app/admin/actions.ts`), nunca no bundle do browser.
+Estado real, verificado programaticamente em 30/08/2026 (`scripts/security_audit_rls_anon.mjs`) e via consulta
+direta a `pg_policies` — não apenas o que a migration deveria ter feito:
+
+- **Login obrigatório (Supabase Auth) para qualquer leitura** — nenhuma tabela tem policy de `SELECT` sem `TO` ou
+  com `TO public`. As 16 tabelas do schema (incluindo as 8 do achado de 27/08 — `representantes`, `produtos`,
+  `fornecedores`, `fornecedor_aliases`, `periodos`, `metas`, `metas_representante`, `import_log`) retornam 0 linhas
+  pra uma requisição PostgREST sem sessão, usando só a `anon key` pública do bundle do browser.
+- **Dimensões** (`representantes`, `produtos`, `fornecedores`, `periodos`, `fornecedor_aliases`, `import_log`,
+  `modulos`, `permissoes_role`) — liberadas pra qualquer usuário `authenticated`.
+- **Tabelas escopadas por representante** (`vendas`, `clientes`, `metas`, `metas_representante`) — via
+  `pode_ver_representante()` (`SECURITY DEFINER`, `supabase_migration_v2.sql:135-155`), que resolve o escopo do
+  vendedor (só o próprio `representante_id`) e do supervisor (via `supervisor_representantes`).
+- **`profiles`/`permissoes_usuario`/`supervisor_representantes`** — via `is_manager()` (`SECURITY DEFINER`,
+  `supabase_migration_v2_2.sql`, corrige a recursão de RLS que derrubou o login em produção por um dia em 27/08).
+- **Escrita:** nenhuma policy de `INSERT`/`UPDATE`/`DELETE` para `authenticated`/`anon` em nenhuma tabela —
+  desenho intencional. Toda escrita passa pela service role key (`supabaseAdmin.ts`), usada só server-side em
+  Server Actions/rotas guardadas por `requirePermission`/`requireRole` (`src/lib/auth/permissions.ts`), nunca no
+  bundle do browser.
+- Referências: `supabase_migration_v2.sql`, `v2_2.sql`, `v2_4.sql` (não só a v1, que este documento descrevia
+  incorretamente até 30/08/2026).
+
+**Scripts de auditoria repetíveis** (rodar a cada mudança futura de RLS):
+
+```bash
+node scripts/security_audit_rls_anon.mjs       # confirma que nenhuma tabela vaza sem login
+node scripts/security_audit_scope_forgery.mjs  # confirma que vendedor/supervisor não veem fora do escopo
+```
+
+O segundo script exige contas de teste vendedor/supervisor (`TEST_*` em `.env.local`, nomes em `.env.example`) —
+não existiam em produção em 30/08/2026 (só 3 contas manager), então essa verificação específica ficou pendente
+até o cliente criar os primeiros usuários desses papéis (ver `PENDENCIAS.md`).
+
+**Auto-cadastro (signup) desabilitado** no painel Supabase (Authentication > Sign In / Providers > "Allow new
+users to sign up") desde 30/08/2026 — o app nunca chama `supabase.auth.signUp()` (só `admin.createUser`,
+restrito a manager), então deixar esse endpoint público aberto não tinha uso legítimo, só expunha uma superfície
+de auto-cadastro/enumeração de e-mail sem necessidade.
+
+## Criptografia
+
+- **Em repouso:** Supabase gerencia AES-256 no armazenamento subjacente (Postgres gerenciado) — fora do
+  controle/configuração do projeto.
+- **Em trânsito:** HTTPS/TLS obrigatório via `supabase-js`/PostgREST; nenhum script do projeto abre conexão
+  direta ao Postgres (confirmado — só `@supabase/supabase-js` em todo o código), então não há ponto que pudesse
+  não forçar SSL.
+- **Senha:** nunca passa por coluna própria — 100% GoTrue/bcrypt nativo do Supabase Auth. Não há script de
+  "criptografia de senha" pra escrever; o hash acontece dentro do Supabase Auth antes da gravação, e o app só
+  envia a senha em texto plano por HTTPS até lá (nunca a lê de volta).
+- **Decisão explícita de não usar pgcrypto agora:**
+  - CNPJ (`clientes.cnpj`) é dado de pessoa jurídica, já publicamente consultável na Receita Federal —
+    criptografá-lo não reduz risco real e quebraria buscas/índices por CNPJ nas telas existentes.
+  - Percentual de comissão é o dado mais sensível de fato, mas já protegido por RLS escopada
+    (`pode_ver_representante()`); criptografia de coluna quebraria as views de agregação
+    (`vw_realizado_rep_fornecedor` etc.), que leem essas colunas ao vivo — contrariando o princípio central do
+    sistema ("tudo calculado ao vivo via view", `01-arquitetura.md`).
+  - **Gatilho futuro registrado:** se um dado genuinamente sensível for adicionado depois (conta bancária pra
+    pagamento de comissão, CPF de representante PJ individual), `pgcrypto` está disponível no Postgres gerenciado
+    do Supabase (`CREATE EXTENSION IF NOT EXISTS pgcrypto;`) — melhor habilitar no momento de criar a coluna do
+    que migrar dado já em cleartext depois.

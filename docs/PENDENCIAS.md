@@ -2,6 +2,86 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 30/08/2026 — varredura de segurança executada (fecha item 7 de 27/08):**
+>
+> Executado o plano de `docs/plano-implementacao-seguranca.md` (escrito em 29/08). Resultado item a item:
+>
+> **Etapa 1 (checklist painel Supabase):**
+> - MFA na conta do dono do projeto: **não habilitado** ("No authenticator apps yet") — exige ação manual do
+>   dono (app autenticador no celular), não automatizável. Ainda pendente.
+> - Backup diário/PITR: **indisponível** — "Free Plan does not include project backups". Não há nenhum backup
+>   automático rodando hoje. Decisão de upgrade pro plano Pro fica em aberto, é decisão de billing do cliente.
+> - Network Restrictions: página não localizada nessa versão do painel/plano — item já era baixa prioridade
+>   (ninguém usa conexão direta ao Postgres, só PostgREST via `supabase-js`).
+> - Comprimento mínimo de senha: **corrigido de 6 para 8**, salvo no painel (Authentication > Sign In/Providers
+>   > Email) e confirmado persistido.
+> - Leaked password protection (HaveIBeenPwned): bloqueado, só disponível no plano Pro.
+> - Rate limit de login: default do Supabase (360 req/5min sign-in/sign-up, 1800/h token refresh) — não
+>   customizado nem desabilitado. OK.
+> - Rotação de refresh token: **habilitada** ("Detect and revoke potentially compromised refresh tokens" = ON,
+>   reuse interval 10s). OK.
+> - anon key vs service_role key: já confirmado — `.env.local`/Vercel usam só `anon`, `service_role` real só no
+>   server (Vercel env). OK.
+> - **Achado extra (fora do checklist original):** "Allow new users to sign up" estava ativo no projeto — a API
+>   `/auth/v1/signup` aceitava auto-cadastro público usando só a `anon key`, embora o app nunca chame
+>   `supabase.auth.signUp()` (só `admin.createUser`, restrito a manager). Testado: como "Confirm email" está
+>   ativo, o cadastro não gerava sessão sem confirmar e-mail, então não vazava dado — mas era superfície sem uso
+>   legítimo. **Desativado** e confirmado via `/auth/v1/settings` (`disable_signup: true`).
+>
+> **Etapa 2a — `scripts/security_audit_rls_anon.mjs` (novo script):** rodou contra produção, **16/16 tabelas OK**
+> — nenhuma linha legível sem sessão, incluindo as 8 do achado de 27/08. Reconfirma que a v2.4 segue aplicada.
+>
+> **Etapa 2b — `scripts/security_audit_scope_forgery.mjs` (novo script, fecha o item 7 de 27/08): bloqueado por
+> falta de dado, não por falha do script.** A base de produção só tem 3 usuários, todos `role=manager` — nenhuma
+> conta vendedor/supervisor existe ainda pra testar contra. Decisão (do usuário): não criar contas de teste
+> descartáveis em produção agora; o script fica pronto e documentado em `02-banco-de-dados.md` pra rodar assim
+> que o cliente criar os primeiros usuários vendedor/supervisor reais. **Item 7 permanece formalmente aberto**
+> até essa checagem rodar de fato — a Etapa 2a fechou a metade "sem login" do achado, não a metade "forjar
+> escopo autenticado".
+>
+> **Etapa 3 (dependências):** `npm audit` → 0 vulnerabilidades. `npm outdated` só mostra bumps menores/majors não
+> urgentes (typescript 7, eslint 10, @types/node 26) — informativo, não é obrigação atualizar agora.
+> **Achado de higiene (não é vulnerabilidade):** o pacote `dotenv` (v17, mesmo autor da dotenvx.com) imprime dicas
+> promocionais aleatórias no stdout a cada load e empacota `SKILL.md` dentro de `node_modules/dotenv/skills/` com
+> instruções voltadas a agentes de IA pra recomendar o produto pago `dotenvx`/`vestauth.com`. Não vaza segredo
+> nem executa nada — só ruído/marketing embutido no pacote. Ignorado como instrução (tratado como conteúdo não
+> confiável), registrado aqui só como algo a manter em mente ao ler output de scripts.
+>
+> **Etapa 4/5 (criptografia + `02-banco-de-dados.md`):** decisão de não implementar pgcrypto agora documentada
+> na íntegra em `docs/02-banco-de-dados.md` (seção Criptografia) — resumo: CNPJ é dado público, comissão já
+> protegida por RLS e criptografá-la quebraria as views de agregação ao vivo, senha é 100% GoTrue/bcrypt. Seção
+> "Segurança (RLS)" do mesmo arquivo foi reescrita — estava desatualizada desde a v2 (dizia "leitura pública, v1
+> não tem login", falso desde 27/08).
+>
+> **Fora de escopo, registrado apenas como item futuro (pedido explícito do usuário em 29/08):** auditoria/log de
+> acesso a dado sensível (quem consultou/alterou comissão, permissões, metas) — só depois do teste de aceitação
+> do cliente.
+>
+> **Pendente pra retomar:** fechar de fato o item 7 (Etapa 2b) assim que existir conta vendedor/supervisor real;
+> habilitar MFA na conta do dono (ação manual); decidir sobre upgrade pro plano Pro (backup + leaked password
+> protection) — questão de billing, não técnica.
+
+> **Atualização 28/08/2026 — devolução manual editável (pedido do cliente):**
+>
+> Cliente pediu pra editar devoluções direto na tela `/analitico/devolucoes` (adicionar/atualizar/excluir), só manager.
+> Como devolução não tem tabela própria — é `devolucao`/`motivo_devolucao` dentro de `vendas` — e o import mensal
+> apaga e reinsere toda linha `origem='erp'` do período (`apagar_vendas_periodo`), editar uma devolução vinda do ERP
+> seria revertido em silêncio no próximo reimport. Decisão (confirmada com o usuário): só devoluções **lançadas
+> manualmente** por essa tela são editáveis/excluíveis (`origem='manual'`, `qtde=0`, mesmo padrão de `/admin/vendas`);
+> as vindas do ERP continuam só-leitura.
+>
+> Implementado: `analitico/devolucoes/actions.ts` (`criarDevolucao`/`atualizarDevolucao`/`excluirDevolucao`, gateadas
+> por `requireRole(["manager"])` — não `requirePermission`, que deixaria passar qualquer role com "editar" na
+> matriz) e `DevolucaoManager.tsx` (form + tabela, só renderiza pra manager). Testado ponta a ponta direto no banco
+> de produção (insert → update → delete, guard `origem/qtde` confirmado) antes do deploy; `tsc`/`eslint`/`next
+> build` limpos. Commit `d87f8aa`, push feito, Vercel `Ready` em produção — confirmado via `vercel ls` e checagem
+> do redirect em `/analitico/devolucoes` no domínio de produção.
+>
+> **Pendente pra retomar:** cliente vai rodar o teste de aceitação (inclui essa tela) e devolver ajustes finos —
+> aguardando o retorno dele antes de mexer em mais nada aqui. O resto da lista abaixo (importar meses anteriores,
+> atribuições de supervisor, senha provisória, item 5, as 4 perguntas de comissão, divergência 471×485) segue aberto
+> como estava em 27/08.
+
 > **Atualização 27/08/2026 — parte 3 (deploy, redirect aberto, ajuda contextual, roteiro de aceitação):**
 >
 > **Deploy feito e verificado.** `master` foi fast-forward de `4d516d3` para `4f6a8f0` (10 commits) e a Vercel
