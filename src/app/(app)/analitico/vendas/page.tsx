@@ -4,26 +4,23 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
 const PAGE_SIZE = 100;
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
 export default async function AnaliticoVendasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; rep?: string }>;
+  searchParams: Promise<{ page?: string; rep?: string; mes?: string }>;
 }) {
   await requirePageAccess("analitico.vendas");
   const supabase = await createServerSupabase();
-  const { page: pageParam, rep: repFiltro } = await searchParams;
+  const { page: pageParam, rep: repFiltro, mes: mesParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
-  const mes = mesAtual();
+  const mes = resolveMes(mesParam);
 
   const [{ data: periodo }, { data: representantes }] = await Promise.all([
     supabase.from("periodos").select("*").eq("mes", mes).maybeSingle(),
@@ -44,23 +41,25 @@ export default async function AnaliticoVendasPage({
   const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
   const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  const buildHref = (p: number) => `/analitico/vendas?page=${p}${repFiltro ? `&rep=${repFiltro}` : ""}`;
+  const mesQuery = mesParam ? `&mes=${mesParam}` : "";
+  const buildHref = (p: number) => `/analitico/vendas?page=${p}${repFiltro ? `&rep=${repFiltro}` : ""}${mesQuery}`;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="analitico.vendas"
         title="Analítico de Vendas"
         subtitle={`Extrato detalhado por nota — ${mes.slice(0, 7)} — ${count ?? 0} registro(s)`}
+        actions={<MesFilter mes={mes} />}
       />
 
       <div className="flex flex-wrap gap-2">
-        <Link href="/analitico/vendas?page=1" className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!repFiltro ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
+        <Link href={`/analitico/vendas?page=1${mesQuery}`} className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!repFiltro ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
           Todos
         </Link>
         {(representantes ?? []).map((r) => (
           <Link
             key={r.id}
-            href={`/analitico/vendas?page=1&rep=${r.id}`}
+            href={`/analitico/vendas?page=1&rep=${r.id}${mesQuery}`}
             className={`text-xs px-3 py-1.5 rounded-full transition-colors ${repFiltro === r.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
           >
             {r.id}

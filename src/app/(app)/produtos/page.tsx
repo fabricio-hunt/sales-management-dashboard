@@ -3,18 +3,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { DistributionDonut } from "@/components/charts/DistributionDonut";
 import { tokens } from "@/lib/design-tokens";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
-
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
 
 const classeCor: Record<string, string> = {
   A: "bg-emerald-100 text-emerald-800",
@@ -28,10 +25,15 @@ const classeChartColor: Record<string, string> = {
   C: tokens.colors.neutral,
 };
 
-export default async function ProdutosPage() {
+export default async function ProdutosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   await requirePageAccess("produtos");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
   const { data: periodo } = await supabase.from("periodos").select("*").eq("mes", mes).maybeSingle();
 
   const [{ data: vendas }, { data: produtos }, { data: fornecedores }] = await Promise.all([
@@ -98,6 +100,7 @@ export default async function ProdutosPage() {
       <PageHeader ajuda="produtos"
         title="Curva ABC de Produtos"
         subtitle={`Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa prática de gestão comercial pra distribuidoras. ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
       />
 
       <KpiGrid>

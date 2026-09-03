@@ -5,15 +5,12 @@ import { requirePageAccess } from "@/lib/auth/permissions";
 import { representantesEscopo, aplicarEscopo } from "@/lib/auth/session";
 import { calcularComissao, type ComissaoFaixa } from "@/lib/comissao/calcular";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { Alert } from "@/components/ui/alert";
 import { EscopoVazio } from "@/components/layout/EscopoVazio";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
-
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
 
 type MetaRow = {
   representante_id: string;
@@ -38,11 +35,16 @@ function faixasParaFornecedor(fornecedorId: number, todas: (ComissaoFaixa & { fo
   return especificas.length > 0 ? especificas : todas.filter((f) => f.fornecedor_id === null);
 }
 
-export default async function ComissoesPage() {
+export default async function ComissoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   const profile = await requirePageAccess("comissoes");
   const supabase = await createServerSupabase();
   const escopo = await representantesEscopo(profile);
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
 
   const { data: metasRepRows } = await supabase.from("metas_representante").select("representante_id").eq("mes", mes);
   const repsAlvo = aplicarEscopo((metasRepRows ?? []).map((r) => r.representante_id), escopo);
@@ -104,6 +106,7 @@ export default async function ComissoesPage() {
       <PageHeader ajuda="comissoes"
         title="Comissão/Premiação"
         subtitle={`Estimativa calculada ao vivo a partir das faixas de atingimento — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
       />
 
       <Alert variant="aviso" titulo="Valores em validação — não use para pagamento ainda">

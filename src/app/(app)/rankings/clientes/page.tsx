@@ -3,20 +3,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
-export default async function RankingClientesPage() {
+export default async function RankingClientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   await requirePageAccess("rankings.clientes");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
 
   // vw_top_clientes_mes já é RLS-escopada por representante (ver
   // supabase_migration_v2.sql) — um vendedor só recebe os clientes da própria
@@ -43,7 +45,12 @@ export default async function RankingClientesPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader ajuda="rankings.clientes" title="Top 20 Clientes" subtitle={`Ranking dos melhores clientes por faturamento — ${mes.slice(0, 7)}`} />
+      <PageHeader
+        ajuda="rankings.clientes"
+        title="Top 20 Clientes"
+        subtitle={`Ranking dos melhores clientes por faturamento — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
+      />
 
       <ChartCard title="Top 10 clientes por faturamento" isEmpty={chartData.length === 0}>
         <CategoryBarChart data={chartData} format="currency-compact" />

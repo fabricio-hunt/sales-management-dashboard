@@ -5,10 +5,12 @@ import { representantesEscopo, aplicarEscopo } from "@/lib/auth/session";
 import { EscopoVazio } from "@/components/layout/EscopoVazio";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -32,11 +34,6 @@ type RealizadoRow = {
   distribuidos: number;
 };
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
 function fornecedorNome(f: MetaRow["fornecedores"]): string {
   if (!f) return "";
   return Array.isArray(f) ? f[0]?.nome_fantasia ?? "" : f.nome_fantasia;
@@ -54,13 +51,13 @@ const fmtNum0 = (v: number) => new Intl.NumberFormat("pt-BR", { maximumFractionD
 export default async function EquipePage({
   searchParams,
 }: {
-  searchParams: Promise<{ rep?: string }>;
+  searchParams: Promise<{ rep?: string; mes?: string }>;
 }) {
   const profile = await requirePageAccess("equipe");
   const supabase = await createServerSupabase();
   const escopo = await representantesEscopo(profile);
-  const { rep: repFiltro } = await searchParams;
-  const mes = mesAtual();
+  const { rep: repFiltro, mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
 
   const { data: periodo, error: periodoErr } = await supabase
     .from("periodos")
@@ -70,7 +67,10 @@ export default async function EquipePage({
 
   if (periodoErr || !periodo) {
     return (
-      <div className="p-8 max-w-2xl mx-auto">
+      <div className="p-8 max-w-2xl mx-auto space-y-4">
+        <div className="flex justify-end">
+          <MesFilter mes={mes} />
+        </div>
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-6 space-y-3">
             <h1 className="text-lg font-bold text-amber-900">Período {mes.slice(0, 7)} não configurado</h1>
@@ -229,8 +229,9 @@ export default async function EquipePage({
       <PageHeader ajuda="equipe"
         title={regiaoLabel}
         subtitle={`Período: ${periodo.data_inicio} a ${periodo.data_fim}`}
-        backHref={repFiltro ? "/equipe" : undefined}
+        backHref={repFiltro ? `/equipe${mesParam ? `?mes=${mesParam}` : ""}` : undefined}
         backLabel="Voltar pra visão consolidada da equipe"
+        actions={<MesFilter mes={mes} />}
       />
 
       {/* ─── KPIs ─── */}
@@ -405,7 +406,7 @@ export default async function EquipePage({
           {repsEquipe.map((repId) => (
             <Link
               key={repId}
-              href={`/equipe?rep=${repId}`}
+              href={`/equipe?rep=${repId}${mesParam ? `&mes=${mesParam}` : ""}`}
               className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               Ver RPA {repId}

@@ -2,17 +2,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
-
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
 
 const fmtCur = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 const fmtCurShort = (v: number) =>
@@ -22,10 +19,15 @@ const fmtDiaCurto = (data: string) => {
   return `${d}/${m}`;
 };
 
-export default async function FaturamentoDiaPage() {
+export default async function FaturamentoDiaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   await requirePageAccess("analitico.faturamento_dia");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
   const { data: periodo } = await supabase.from("periodos").select("*").eq("mes", mes).maybeSingle();
 
   const { data: rows } = periodo
@@ -57,7 +59,12 @@ export default async function FaturamentoDiaPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <PageHeader ajuda="analitico.faturamento_dia" title="Faturamento Diário" subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`} />
+      <PageHeader
+        ajuda="analitico.faturamento_dia"
+        title="Faturamento Diário"
+        subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
+      />
 
       <KpiGrid>
         <KpiCard label="Total do mês" value={fmtCurShort(totalMes)} hint={fmtCur(totalMes)} />

@@ -3,23 +3,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 import DevolucaoManager from "./DevolucaoManager";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
-export default async function DevolucoesPage() {
+export default async function DevolucoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   const profile = await requirePageAccess("analitico.devolucoes");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
   const { data: periodo } = await supabase.from("periodos").select("*").eq("mes", mes).maybeSingle();
 
   const podeGerenciar = profile.role === "manager";
@@ -70,7 +72,12 @@ export default async function DevolucoesPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader ajuda="analitico.devolucoes" title="Devoluções de Vendas" subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`} />
+      <PageHeader
+        ajuda="analitico.devolucoes"
+        title="Devoluções de Vendas"
+        subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
+      />
 
       <KpiGrid>
         <KpiCard label="Total devolvido" value={fmtCur(totalDevolucao)} />

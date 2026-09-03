@@ -3,20 +3,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
-export default async function AnaliticoClientePage() {
+export default async function AnaliticoClientePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   await requirePageAccess("analitico.cliente");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
   const { data: periodo } = await supabase.from("periodos").select("*").eq("mes", mes).maybeSingle();
 
   const { data: rows } = periodo
@@ -51,7 +53,12 @@ export default async function AnaliticoClientePage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader ajuda="analitico.cliente" title="Analítico Cliente" subtitle={`Venda e devolução por cliente — ${mes.slice(0, 7)}`} />
+      <PageHeader
+        ajuda="analitico.cliente"
+        title="Analítico Cliente"
+        subtitle={`Venda e devolução por cliente — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
+      />
 
       <ChartCard title="Top 10 clientes por faturamento" isEmpty={chartData.length === 0}>
         <CategoryBarChart data={chartData} format="currency-compact" />

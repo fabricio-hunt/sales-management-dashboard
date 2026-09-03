@@ -2,18 +2,20 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MesFilter } from "@/components/layout/MesFilter";
+import { resolveMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
-function mesAtual() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
-export default async function DistribuicaoPage() {
+export default async function DistribuicaoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
   await requirePageAccess("distribuicao");
   const supabase = await createServerSupabase();
-  const mes = mesAtual();
+  const { mes: mesParam } = await searchParams;
+  const mes = resolveMes(mesParam);
 
   const [{ data: realizado }, { data: metas }, { data: reps }, { data: fornecedores }] = await Promise.all([
     supabase.from("vw_realizado_rep_fornecedor").select("*").eq("mes", mes),
@@ -49,6 +51,7 @@ export default async function DistribuicaoPage() {
       <PageHeader ajuda="distribuicao"
         title="Resumo Distribuição"
         subtitle={`Clientes distintos positivados por representante × fornecedor — ${mes.slice(0, 7)}`}
+        actions={<MesFilter mes={mes} />}
       />
 
       <Card className="overflow-hidden">
