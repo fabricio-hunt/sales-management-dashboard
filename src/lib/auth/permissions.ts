@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentProfile, type Profile, type UserRole } from "@/lib/auth/session";
@@ -11,7 +12,10 @@ export type PermissoesResolvidas = Record<string, NivelPermissao>;
 // permissoes_usuario (se existir linha pro par usuário+módulo) tem prioridade
 // sobre o default de permissoes_role — mesma convenção de override nullable
 // já usada em metas_representante (specific overrides general).
-export async function getPermissoesResolvidas(profile: Profile): Promise<PermissoesResolvidas> {
+// cache() dedupa entre layout + requirePageAccess/requirePermission da mesma
+// request (mesmo padrão de getCurrentProfile em session.ts) — sem isso, toda
+// navegação de supervisor/vendedor rodava essa dupla de queries duas vezes.
+export const getPermissoesResolvidas = cache(async (profile: Profile): Promise<PermissoesResolvidas> => {
   const supabase = await createServerSupabase();
   const [{ data: roleRows }, { data: userRows }] = await Promise.all([
     supabase.from("permissoes_role").select("modulo_slug, nivel").eq("role", profile.role),
@@ -22,7 +26,7 @@ export async function getPermissoesResolvidas(profile: Profile): Promise<Permiss
   for (const r of roleRows ?? []) resolved[r.modulo_slug] = r.nivel as NivelPermissao;
   for (const r of userRows ?? []) resolved[r.modulo_slug] = r.nivel as NivelPermissao;
   return resolved;
-}
+});
 
 export function nivelAlcanca(nivel: NivelPermissao | undefined, minimo: NivelPermissao): boolean {
   return NIVEL_ORDEM[nivel ?? "nenhum"] >= NIVEL_ORDEM[minimo];
