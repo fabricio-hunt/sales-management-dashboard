@@ -41,7 +41,7 @@ export default function ContaClient({ nome, email, role }: { nome: string; email
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div>
               <p className="text-muted-foreground">E-mail</p>
               <p className="font-medium">{email}</p>

@@ -127,9 +127,9 @@ export default function PermissoesAdminPage() {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{grupo}</p>
                     <div className="space-y-1">
                       {mods.map((m) => (
-                        <div key={m.slug} className="flex items-center justify-between gap-4 py-1.5 border-b border-border/60 last:border-0">
+                        <div key={m.slug} className="flex flex-col gap-2 py-1.5 border-b border-border/60 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                           <span className="text-sm text-foreground">{m.label}</span>
-                          <div className="flex items-center gap-4">
+                          <div className="flex flex-wrap items-center gap-4">
                             {(["vendedor", "supervisor"] as Role[]).map((role) => (
                               <div key={role} className="flex items-center gap-1.5">
                                 <span className="text-[10px] text-muted-foreground uppercase w-16">{ROLE_LABEL[role]}</span>
@@ -159,7 +159,7 @@ export default function PermissoesAdminPage() {
                 <select
                   value={usuarioSelecionado}
                   onChange={(e) => setUsuarioSelecionado(e.target.value)}
-                  className="h-9 w-72 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm sm:w-72"
                 >
                   <option value="">Selecione um usuário...</option>
                   {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nome} ({ROLE_LABEL[u.role]})</option>)}
@@ -175,9 +175,9 @@ export default function PermissoesAdminPage() {
                             const override = porUsuario[`${usuarioAtual.id}:${m.slug}`]
                             const efetivo = override ?? porRole[`${usuarioAtual.role}:${m.slug}`] ?? "nenhum"
                             return (
-                              <div key={m.slug} className="flex items-center justify-between gap-4 py-1.5 border-b border-border/60 last:border-0">
+                              <div key={m.slug} className="flex flex-col gap-2 py-1.5 border-b border-border/60 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                 <span className="text-sm text-foreground">{m.label}</span>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   {override && <span className="text-[10px] text-amber-600 uppercase">override</span>}
                                   <select
                                     value={override ?? "herdar"}
