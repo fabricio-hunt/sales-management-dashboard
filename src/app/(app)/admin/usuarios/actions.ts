@@ -72,17 +72,20 @@ export async function updateUsuario(payload: {
 // configurado: sem e-mail não há "esqueci minha senha", então alguém precisa
 // conseguir destravar quem perdeu o acesso — a alternativa seria apagar e
 // recriar o usuário, perdendo as atribuições dele.
-export async function resetarSenha(payload: { id: string; password: string }) {
+// Retorna { error } em vez de lançar: em produção o Next.js substitui a
+// mensagem de qualquer erro lançado dentro de uma Server Action pelo aviso
+// genérico do React (#441), então o motivo real nunca chegaria ao usuário.
+export async function resetarSenha(payload: { id: string; password: string }): Promise<{ error?: string }> {
   const manager = await requireRole(["manager"]);
 
   if (payload.password.length < 6) {
-    throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+    return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
 
   const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(payload.id, {
     password: payload.password,
   });
-  if (authError) throw new Error(authError.message);
+  if (authError) return { error: authError.message };
 
   // Volta a exigir troca no próximo acesso: o Manager conhece essa senha, ela
   // não pode virar a senha permanente da pessoa (mesma regra de createUsuario).
@@ -93,10 +96,11 @@ export async function resetarSenha(payload: { id: string; password: string }) {
       .from("profiles")
       .update({ senha_provisoria: true })
       .eq("id", payload.id);
-    if (profileError) throw new Error(profileError.message);
+    if (profileError) return { error: profileError.message };
   }
 
   revalidatePath("/admin/usuarios");
+  return {};
 }
 
 export async function deleteUsuario(id: string) {

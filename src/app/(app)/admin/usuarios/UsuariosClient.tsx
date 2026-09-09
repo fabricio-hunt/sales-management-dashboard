@@ -113,7 +113,11 @@ export default function UsuariosAdminPage() {
     }
     setSalvandoReset(true)
     try {
-      await resetarSenha({ id: u.id, password: novaSenha })
+      const { error } = await resetarSenha({ id: u.id, password: novaSenha })
+      if (error) {
+        toast.error("Erro ao redefinir senha: " + error)
+        return
+      }
       toast.success(`Senha de ${u.nome} redefinida. Ele troca no próximo acesso.`)
       setResetando(null)
       setNovaSenha("")
