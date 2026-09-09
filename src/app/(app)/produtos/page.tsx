@@ -9,7 +9,7 @@ import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { DistributionDonut } from "@/components/charts/DistributionDonut";
 import { tokens } from "@/lib/design-tokens";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -99,7 +99,7 @@ export default async function ProdutosPage({
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="produtos"
         title="Curva ABC de Produtos"
-        subtitle={`Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa prática de gestão comercial pra distribuidoras. ${mes.slice(0, 7)}`}
+        subtitle={`Classificação por relevância de faturamento — não existe na planilha original, adicionado como boa prática de gestão comercial pra distribuidoras. ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

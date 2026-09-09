@@ -9,7 +9,7 @@ import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 import DevolucaoManager from "./DevolucaoManager";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -75,7 +75,7 @@ export default async function DevolucoesPage({
       <PageHeader
         ajuda="analitico.devolucoes"
         title="Devoluções de Vendas"
-        subtitle={`Motivos de devolução — ${mes.slice(0, 7)}`}
+        subtitle={`Motivos de devolução — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

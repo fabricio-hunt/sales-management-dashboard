@@ -3,7 +3,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { requirePageAccess } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -50,7 +50,7 @@ export default async function DistribuicaoPage({
     <div className="p-6 max-w-[1500px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="distribuicao"
         title="Resumo Distribuição"
-        subtitle={`Clientes distintos positivados por representante × fornecedor — ${mes.slice(0, 7)}`}
+        subtitle={`Clientes distintos positivados por representante × fornecedor — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

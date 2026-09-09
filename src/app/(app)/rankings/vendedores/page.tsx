@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -59,7 +59,7 @@ export default async function RankingVendedoresPage({
       <PageHeader
         ajuda="rankings.vendedores"
         title="Top 10 Vendedores"
-        subtitle={`Ranking dos vendedores com melhor desempenho financeiro — ${mes.slice(0, 7)}`}
+        subtitle={`Ranking dos vendedores com melhor desempenho financeiro — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

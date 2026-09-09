@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
 import { Alert } from "@/components/ui/alert";
 import { EscopoVazio } from "@/components/layout/EscopoVazio";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -105,7 +105,7 @@ export default async function ComissoesPage({
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="comissoes"
         title="Comissão/Premiação"
-        subtitle={`Estimativa calculada ao vivo a partir das faixas de atingimento — ${mes.slice(0, 7)}`}
+        subtitle={`Estimativa calculada ao vivo a partir das faixas de atingimento — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

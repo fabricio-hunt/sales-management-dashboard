@@ -7,7 +7,7 @@ import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -62,7 +62,7 @@ export default async function FaturamentoDiaPage({
       <PageHeader
         ajuda="analitico.faturamento_dia"
         title="Faturamento Diário"
-        subtitle={`Venda líquida por dia — ${mes.slice(0, 7)}`}
+        subtitle={`Venda líquida por dia — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -56,7 +56,7 @@ export default async function RankingFinanceiroPage({
       <PageHeader
         ajuda="rankings.financeiro"
         title="Ranking Financeiro"
-        subtitle={`Faturamento líquido por representante — ${mes.slice(0, 7)}`}
+        subtitle={`Faturamento líquido por representante — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 

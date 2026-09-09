@@ -10,7 +10,7 @@ import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -73,7 +73,7 @@ export default async function EquipePage({
         </div>
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-6 space-y-3">
-            <h1 className="text-lg font-bold text-amber-900">Período {mes.slice(0, 7)} não configurado</h1>
+            <h1 className="text-lg font-bold text-amber-900">Período {formatMes(mes)} não configurado</h1>
             <p className="text-sm text-amber-800">
               Nenhum registro em <code>periodos</code> para este mês (ou a migration v1 ainda não foi rodada no
               Supabase). Cadastre o período em <Link href="/configuracoes" className="underline font-medium">/configuracoes</Link>{" "}

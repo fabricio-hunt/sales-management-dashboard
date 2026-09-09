@@ -5,7 +5,7 @@ import { requirePageAccess } from "@/lib/auth/permissions";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -48,7 +48,7 @@ export default async function AnaliticoVendasPage({
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="analitico.vendas"
         title="Analítico de Vendas"
-        subtitle={`Extrato detalhado por nota — ${mes.slice(0, 7)} — ${count ?? 0} registro(s)`}
+        subtitle={`Extrato detalhado por nota — ${formatMes(mes)} — ${count ?? 0} registro(s)`}
         actions={<MesFilter mes={mes} />}
       />
 

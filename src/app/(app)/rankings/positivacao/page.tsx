@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MesFilter } from "@/components/layout/MesFilter";
 import { ChartCard } from "@/components/data-display/ChartCard";
 import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
-import { resolveMes } from "@/lib/periodo";
+import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
 
@@ -55,7 +55,7 @@ export default async function RankingPositivacaoPage({
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader ajuda="rankings.positivacao"
         title="Ranking de Positivação"
-        subtitle={`% de atingimento do objetivo de positivação por representante — ${mes.slice(0, 7)}`}
+        subtitle={`% de atingimento do objetivo de positivação por representante — ${formatMes(mes)}`}
         actions={<MesFilter mes={mes} />}
       />
 
