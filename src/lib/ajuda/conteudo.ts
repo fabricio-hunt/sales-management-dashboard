@@ -128,6 +128,17 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
     atencao: "Precisa de mais de um mês importado para desenhar tendência. Com um mês só, o gráfico tem um ponto.",
   },
 
+  "comparativo.anual": {
+    resumo: "Compara dois anos civis lado a lado: faturamento, devolução, positivação e ticket médio, mês a mês.",
+    passos: [
+      "Escolha os dois anos no topo — inclusive anos futuros ou sem carga nenhuma.",
+      "No gráfico, uma lacuna é mês que ainda não chegou; um mês zerado é mês que já passou sem venda registrada.",
+    ],
+    fonte: "Somado direto de vendas por ano civil, sem depender de período cadastrado em Configurações.",
+    atencao:
+      "Ano sem alerta acima mas com KPI zerado é 'sem carga ainda', não 'vendeu zero'. Comparar um ano em andamento com um ano fechado sempre mostra viés pelos meses que faltam no ano em andamento.",
+  },
+
   "admin.importar": {
     resumo: "Entrada de dados do sistema. É o que mantém todas as outras telas atualizadas.",
     passos: [

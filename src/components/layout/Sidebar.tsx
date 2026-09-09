@@ -24,6 +24,7 @@ import {
   Percent,
   LogOut,
   BookOpen,
+  CalendarRange,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/app/login/actions";
@@ -83,6 +84,7 @@ export function Sidebar({
       links: [
         { href: "/distribuicao", label: "Resumo Distribuição", icon: Package, slug: "distribuicao" },
         { href: "/evolucao", label: "Evolução por Cliente", icon: LineChart, slug: "evolucao" },
+        { href: "/comparativo-anual", label: "Comparativo Anual", icon: CalendarRange, slug: "comparativo.anual" },
       ],
     },
     {

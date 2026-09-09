@@ -17,6 +17,24 @@ export function resolveMes(mesParam?: string): string {
   return MES_PADRAO;
 }
 
+// Anos usados no Comparativo Anual quando a tela abre sem ?anoA=/?anoB= na
+// URL. Fixo em 2025 x 2026 pelo mesmo motivo do MES_PADRAO acima: nenhum dos
+// dois tem base completa carregada ainda, mas é o par que faz sentido hoje —
+// não é derivado do ano corrente porque a tela precisa continuar estável
+// enquanto a carga de dados evolui.
+const ANO_A_PADRAO = 2025;
+const ANO_B_PADRAO = 2026;
+
+/**
+ * Resolve o par de anos do Comparativo Anual a partir de ?anoA=/?anoB= da
+ * URL (formato YYYY), caindo pros padrões quando ausentes ou inválidos.
+ */
+export function resolveAnosComparativo(anoAParam?: string, anoBParam?: string): { anoA: number; anoB: number } {
+  const anoA = anoAParam && /^\d{4}$/.test(anoAParam) ? Number(anoAParam) : ANO_A_PADRAO;
+  const anoB = anoBParam && /^\d{4}$/.test(anoBParam) ? Number(anoBParam) : ANO_B_PADRAO;
+  return { anoA, anoB };
+}
+
 const MESES_PT_BR = [
   "janeiro",
   "fevereiro",
