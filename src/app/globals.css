@@ -4,6 +4,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Ilustração animada da página 404 (src/app/not-found.tsx) */
+@keyframes swing-plug {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(9deg); }
+}
+@keyframes spark-flicker {
+  0%, 14% { opacity: 0; transform: scale(0.5); }
+  20% { opacity: 1; transform: scale(1.15); }
+  28% { opacity: 0.35; transform: scale(0.85); }
+  38%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes float-blob {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(14px, -18px); }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
