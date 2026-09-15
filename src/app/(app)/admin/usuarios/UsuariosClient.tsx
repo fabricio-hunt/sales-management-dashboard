@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react"
 import { createBrowserSupabase } from "@/lib/supabase/client"
-import { createUsuario, updateUsuario, deleteUsuario, resetarSenha, setSupervisorRepresentantes } from "./actions"
+import { createUsuario, updateUsuario, deleteUsuario, resetarSenha, setSupervisorRepresentantes, listarUsuarios } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +14,7 @@ import { Plus, Trash2, Save, ChevronDown, ChevronUp, KeyRound } from "lucide-rea
 import { PageHeader } from "@/components/layout/PageHeader"
 
 type Role = "manager" | "supervisor" | "vendedor"
-type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean; senha_provisoria: boolean }
+type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean; senha_provisoria: boolean; email: string | null }
 type Representante = { id: string; nome: string }
 
 const ROLE_LABEL: Record<Role, string> = { manager: "Manager", supervisor: "Supervisor", vendedor: "Vendedor" }
@@ -35,8 +35,8 @@ export default function UsuariosAdminPage() {
   const [salvandoReset, setSalvandoReset] = useState(false)
 
   async function load() {
-    const [{ data: users }, { data: reps }, { data: sup }] = await Promise.all([
-      supabase.from("profiles").select("id, nome, role, representante_id, ativo, senha_provisoria").order("nome"),
+    const [users, { data: reps }, { data: sup }] = await Promise.all([
+      listarUsuarios(),
       supabase.from("representantes").select("id, nome").order("id"),
       supabase.from("supervisor_representantes").select("supervisor_id, representante_id"),
     ])
@@ -208,6 +208,7 @@ export default function UsuariosAdminPage() {
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
               <TableHead>Perfil</TableHead>
               <TableHead>Representante</TableHead>
               <TableHead className="text-center">Ativo</TableHead>
@@ -216,9 +217,9 @@ export default function UsuariosAdminPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : usuarios.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Nenhum usuário cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Nenhum usuário cadastrado.</TableCell></TableRow>
             ) : (
               usuarios.map((u) => (
                 <React.Fragment key={u.id}>
@@ -235,6 +236,9 @@ export default function UsuariosAdminPage() {
                           </span>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">{u.email ?? "-"}</span>
                     </TableCell>
                     <TableCell>
                       <select
@@ -282,7 +286,7 @@ export default function UsuariosAdminPage() {
                   </TableRow>
                   {resetando === u.id && (
                     <TableRow>
-                      <TableCell colSpan={5} className="bg-muted/30">
+                      <TableCell colSpan={6} className="bg-muted/30">
                         <div className="flex flex-wrap items-end gap-3 p-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs">Nova senha para {u.nome}</Label>
@@ -309,7 +313,7 @@ export default function UsuariosAdminPage() {
                   )}
                   {u.role === "supervisor" && expandido === u.id && (
                     <TableRow>
-                      <TableCell colSpan={5} className="bg-muted/30">
+                      <TableCell colSpan={6} className="bg-muted/30">
                         <div className="p-3 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Representantes que este supervisor pode ver:</p>
                           <div className="flex flex-wrap gap-3">

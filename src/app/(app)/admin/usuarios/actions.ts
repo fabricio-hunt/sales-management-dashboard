@@ -9,6 +9,43 @@ import type { UserRole } from "@/lib/auth/session";
 // como o resto do admin — criar/editar login de outra pessoa é sensível o
 // bastante pra não delegar via permissoes_usuario).
 
+export type UsuarioComEmail = {
+  id: string;
+  nome: string;
+  role: UserRole;
+  representante_id: string | null;
+  ativo: boolean;
+  senha_provisoria: boolean;
+  email: string | null;
+};
+
+// O e-mail mora em auth.users, não em profiles — só a Admin API (service role)
+// enxerga essa tabela, então a tela não consegue montar essa coluna sozinha
+// com o client do browser (RLS + anon key não alcançam auth.users).
+export async function listarUsuarios(): Promise<UsuarioComEmail[]> {
+  await requireRole(["manager"]);
+
+  const { data: profiles, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, nome, role, representante_id, ativo, senha_provisoria")
+    .order("nome");
+  if (error) throw new Error(error.message);
+  if (!profiles || profiles.length === 0) return [];
+
+  const emailPorId = new Map<string, string>();
+  const perPage = 200;
+  for (let page = 1; ; page++) {
+    const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (listError) throw new Error(listError.message);
+    for (const u of data.users) {
+      if (u.email) emailPorId.set(u.id, u.email);
+    }
+    if (data.users.length < perPage) break;
+  }
+
+  return profiles.map((p) => ({ ...p, email: emailPorId.get(p.id) ?? null }));
+}
+
 export async function createUsuario(payload: {
   email: string;
   password: string;
