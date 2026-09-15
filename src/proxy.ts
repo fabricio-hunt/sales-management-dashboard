@@ -35,8 +35,13 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
+  // /auth/callback ainda não tem sessão nos cookies quando chega aqui — é
+  // exatamente essa rota que troca o ?code= do Google pela sessão. Tratando
+  // como rota de login pro gate grosso, evita ela ser mandada pro /login
+  // antes de rodar (ver src/app/auth/callback/route.ts).
+  const isAuthCallback = request.nextUrl.pathname.startsWith("/auth/callback");
 
-  if (!user && !isLoginRoute) {
+  if (!user && !isLoginRoute && !isAuthCallback) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);

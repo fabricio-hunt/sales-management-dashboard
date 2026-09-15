@@ -5,9 +5,9 @@ import { LoginForm } from "./LoginForm";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; erro?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, erro } = await searchParams;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -17,7 +17,7 @@ export default async function LoginPage({
           <CardTitle>Entrar</CardTitle>
         </CardHeader>
         <CardContent>
-          <LoginForm next={next ?? "/"} />
+          <LoginForm next={next ?? "/"} erroOAuth={erro} />
         </CardContent>
       </Card>
     </div>
