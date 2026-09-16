@@ -2,6 +2,61 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 15/09/2026 — e-mail em Usuários, login com Google, 404 animada — login com Google quebrado em produção (Vercel), causa raiz ainda não encontrada:**
+>
+> **Entregue e funcionando:**
+> - **E-mail visível em `/admin/usuarios`.** O e-mail mora em `auth.users`, não em `profiles` — a tela não
+>   conseguia mostrá-lo com o client do browser (RLS + anon key não alcançam `auth.users`). Nova server action
+>   `listarUsuarios()` (`admin/usuarios/actions.ts`), manager-only, casa `profiles` com
+>   `supabaseAdmin.auth.admin.listUsers()` paginado. Commit `052f11d`.
+> - **Login com Google (PKCE via Supabase).** Botão "Entrar com Google" em `LoginForm.tsx` +
+>   `src/app/auth/callback/route.ts` (troca `code` por sessão, só libera quem já tem linha ativa em `profiles` —
+>   sem auto-cadastro). Primeiro login por Google também zera `senha_provisoria` (essa flag só faz sentido pra
+>   quem loga por senha). `src/proxy.ts` precisou excluir `/auth/callback` do gate de sessão, senão o middleware
+>   mandava o retorno do Google pro `/login` antes da troca de código rodar. Testado **local** (`npm run dev`)
+>   com sucesso de primeira, incluindo o caso de `senha_provisoria` sendo zerada. Commit `e711906`.
+> - **Página 404 animada** (`src/app/not-found.tsx`) — tomada desconectada com plugue balançando e faíscas,
+>   `prefers-reduced-motion` respeitado. No caminho, corrigido um warning real do Base UI: `<Button
+>   render={<Link .../>}>` precisa de `nativeButton={false}`, senão ele espera um `<button>` nativo. Commit
+>   `bb0e236`.
+>
+> **BLOQUEADO — login com Google não funciona em produção (Vercel), causa raiz não encontrada ainda:**
+>
+> Primeiro sintoma: clicar "Entrar com Google" em `sales-management-dashboard.vercel.app` voltava pra
+> `http://localhost:3000/` — clássico fallback do Supabase pro **Site URL** quando o `redirect_to` pedido não
+> bate com nada na allowlist de **Redirect URLs** (que estava **vazia**). Orientado o usuário a: (1) trocar Site
+> URL de `http://localhost:3000` pro domínio de produção, (2) adicionar
+> `https://sales-management-dashboard.vercel.app/auth/callback` e `http://localhost:3000/auth/callback` em
+> Redirect URLs. Usuário confirmou as duas entradas presentes e **persistidas após reload** da página do
+> Supabase.
+>
+> Mesmo assim, o sintoma mudou mas não sumiu: agora o `code` da troca OAuth chega em
+> `https://sales-management-dashboard.vercel.app/?code=...` (a raiz, com o domínio certo) **em vez de**
+> `/auth/callback?code=...` — ou seja, `/auth/callback/route.ts` nunca chega a rodar. Isso é o mesmo mecanismo de
+> fallback pro Site URL, só que agora só o **caminho** está sendo descartado, com Redirect URLs aparentemente
+> corretas. Nesse meio-tempo também apareceu um **504 FUNCTION_INVOCATION_TIMEOUT** numa das tentativas (região
+> `gru1`) — por precaução, `src/app/auth/callback/route.ts` foi reescrito pra nunca mais travar em silêncio: todo
+> o fluxo (exchange + checagem de `profiles`) roda dentro de um `Promise.race` com timeout de 8s, falhando rápido
+> pro `?erro=oauth` com `console.error` no log em vez de ficar pendurado até o timeout da plataforma (commit
+> `40a1da7`). Isso é defesa, não a correção do bug — como o `code` nem chega em `/auth/callback`, essa rota não
+> era a causa do 504 observado; pode ter sido um hiccup pontual de rede/cold start.
+>
+> Confirmado que **não é falta de env var na Vercel**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+> e `SUPABASE_SERVICE_ROLE_KEY` existem no ambiente Production. Também descartada a hipótese de o e-mail duplicado
+> (mesma conta já cadastrada por senha) ser a causa — isso apareceria como `?error=` na URL, não como o `code`
+> caindo na raiz.
+>
+> **Pendente pra retomar amanhã, em ordem:**
+> 1. **Teste decisivo:** DevTools → aba Network → filtrar por "authorize" → clicar "Entrar com Google" → inspecionar
+>    o parâmetro `redirect_to` da própria requisição a `*.supabase.co/auth/v1/authorize?...`. Se já vier errado
+>    ali, o problema é antes do Supabase (algo no client/build da Vercel); se vier certo, o problema é 100% do
+>    lado do Supabase não casando com a allowlist mesmo com as entradas aparentemente corretas.
+> 2. Se o `redirect_to` vier certo: conferir se não há espaço/caractere invisível nas entradas de Redirect URLs, se
+>    o projeto Supabase sendo editado é de fato `nnmgzqxfdjmhpmdcakwo` (mesmo do `.env.local`/Vercel), e considerar
+>    abrir suporte do Supabase se persistir.
+> 3. Depois de resolver o redirect: **ainda falta validar** o caso de conta já existente por senha fazendo login
+>    via Google pela primeira vez em produção (linkagem automática por e-mail) — só foi testado local.
+
 > **Atualização 30/08/2026 — varredura de segurança executada (fecha item 7 de 27/08):**
 >
 > Executado o plano de `docs/plano-implementacao-seguranca.md` (escrito em 29/08). Resultado item a item:
