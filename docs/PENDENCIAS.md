@@ -2,6 +2,30 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 17/09/2026 — causa raiz do login com Google em produção encontrada e corrigida (fecha o bloqueio de 15/09):**
+>
+> Não era bug de código: era o domínio errado configurado no Supabase. `sales-management-dashboard.vercel.app`
+> (sem `-gules`) é o `.vercel.app` de um **projeto de terceiros não relacionado** ("Create T3 App" na raiz,
+> `/login` 404, `/dashboard` 504) — coincidência de nome de subdomínio. O domínio real de produção deste projeto,
+> confirmado no painel da Vercel (`vercel.com/fabricio-hunts-projects/sales-management-dashboard`, Production
+> Deployment do commit `1f1b624`), sempre foi **`sales-management-dashboard-gules.vercel.app`**. A sessão de
+> 15/09 testou e configurou o Redirect URLs/Site URL do Supabase contra o domínio errado, então o `redirect_to`
+> real enviado pelo app (`window.location.origin` na origem `-gules`) nunca batia com a allowlist — daí o
+> fallback pro Site URL, também errado, aterrissando o `code` em `/` do projeto de outra pessoa.
+>
+> **Correção aplicada** em Authentication > URL Configuration do Supabase (`nnmgzqxfdjmhpmdcakwo`):
+> - Site URL: `https://sales-management-dashboard.vercel.app` → `https://sales-management-dashboard-gules.vercel.app`
+> - Redirect URLs: removida a entrada `https://sales-management-dashboard.vercel.app/auth/callback`, adicionada
+>   `https://sales-management-dashboard-gules.vercel.app/auth/callback` (mantida a de `localhost:3000`).
+>
+> **Testado e confirmado em produção** (`sales-management-dashboard-gules.vercel.app/login` → "Entrar com Google"):
+> fluxo completo funcionando, sessão criada, landing correto no dashboard autenticado. Nenhuma mudança de código
+> foi necessária — `LoginForm.tsx`, `auth/callback/route.ts` e `proxy.ts` já estavam corretos, como suspeitado
+> na sessão de 15/09.
+>
+> **Pendente:** o caso de conta já existente por senha fazendo login via Google pela primeira vez em produção
+> (linkagem automática por e-mail) ainda não foi validado em produção — só local.
+
 > **Atualização 15/09/2026 — e-mail em Usuários, login com Google, 404 animada — login com Google quebrado em produção (Vercel), causa raiz ainda não encontrada:**
 >
 > **Entregue e funcionando:**
