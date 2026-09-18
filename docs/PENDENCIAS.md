@@ -2,6 +2,31 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 18/09/2026 — módulo Assistente IA adicionado; vulnerabilidade crítica do Next.js corrigida:**
+>
+> **Assistente IA (`/assistente`).** Novo módulo, irmão do Manual de Uso, com um chat (Google Gemini,
+> `@google/genai`) que responde perguntas sobre o sistema com base na documentação. Aberto a todo usuário logado
+> (mesmo padrão de acesso do Manual de Uso — fora do sistema de permissões por módulo), sem persistência de
+> histórico (fica só em memória do componente, some ao recarregar a página). Ver `06-assistente-ia.md` para a
+> arquitetura completa, o que entra/não entra no contexto enviado à IA e as limitações conhecidas.
+>
+> **Trade-off já registrado para revisitar depois:** o contexto de documentação enviado à IA
+> (`src/lib/assistente/contexto.ts`) é uma cópia estática — não há leitura em runtime nem pipeline de sync com o
+> Manual de Uso (`docs/page.tsx`) ou com os `.md` técnicos. Mudança relevante num desses lugares precisa ser
+> replicada manualmente em `contexto.ts`, senão o assistente passa a responder com informação desatualizada.
+>
+> **Sem rate limiting persistente no v1** — mitigado só por limite de tamanho de mensagem/histórico por request
+> (ver `route.ts`). Como o deploy é serverless (Vercel), um limitador em memória não seria confiável entre
+> invocações; se abuso de custo da API do Gemini virar problema real, a solução passa por uma tabela no Supabase.
+>
+> **Vulnerabilidade crítica corrigida:** `npm audit` acusava uma RCE não autenticada no Next.js 16.3.2
+> (`GHSA-p293-qw3h-jr36`, servidores hospedados em Windows, e `GHSA-2xp9-vwfh-vxw4`, Image Optimization API com
+> AVIF). Corrigido subindo `next`/`eslint-config-next` de `16.3.2` para `16.3.5` (patch dentro da mesma major,
+> sem mudança de API) — `npm audit` limpo depois (0 vulnerabilidades). As demais vulnerabilidades reportadas
+> (`fast-uri`, `hono`, `qs` — trazidas por `@google/genai` via `@modelcontextprotocol/sdk`, código não usado pelo
+> projeto; `js-yaml`, dev-only via `eslint`; `sharp`, transitiva do próprio `next`) foram resolvidas juntas por
+> `npm audit fix`.
+
 > **Atualização 17/09/2026 — causa raiz do login com Google em produção encontrada e corrigida (fecha o bloqueio de 15/09):**
 >
 > Não era bug de código: era o domínio errado configurado no Supabase. `sales-management-dashboard.vercel.app`
