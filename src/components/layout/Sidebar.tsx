@@ -25,6 +25,7 @@ import {
   LogOut,
   BookOpen,
   CalendarRange,
+  Bot,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/app/login/actions";
@@ -199,6 +200,20 @@ export function Sidebar({
           >
             <BookOpen className={`w-4 h-4 transition-colors ${pathname === "/docs" ? "text-accent-foreground" : "group-hover:text-foreground"}`} />
             Manual de Uso
+          </Link>
+
+          {/* Mesmo raciocínio do link acima: chat de IA sobre a documentação,
+              aberto a todo usuário logado, fora do sistema de permissões. */}
+          <Link
+            href="/assistente"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150 group text-sm ${pathname === "/assistente"
+                ? "bg-accent text-accent-foreground font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+          >
+            <Bot className={`w-4 h-4 transition-colors ${pathname === "/assistente" ? "text-accent-foreground" : "group-hover:text-foreground"}`} />
+            Assistente IA
           </Link>
 
           <div className="flex items-center gap-3 px-2 py-2">
