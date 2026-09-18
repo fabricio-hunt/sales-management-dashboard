@@ -26,6 +26,27 @@ Documento criado para registrar todos os pontos abertos antes de continuar o des
 > (`fast-uri`, `hono`, `qs` — trazidas por `@google/genai` via `@modelcontextprotocol/sdk`, código não usado pelo
 > projeto; `js-yaml`, dev-only via `eslint`; `sharp`, transitiva do próprio `next`) foram resolvidas juntas por
 > `npm audit fix`.
+>
+> **Atualização (mesmo dia, após teste manual com `GEMINI_API_KEY` real):**
+> - **`gemini-2.5-flash` (default original) estava descontinuado** — a API devolvia 404 pedindo pra trocar por um
+>   modelo da família 3.x. Trocado o default para `gemini-3.6-flash` (confirmado funcionando contra a API).
+> - **`maxOutputTokens: 1024` era baixo demais** para o `gemini-3.x`, que consome tokens de "thinking" do mesmo
+>   orçamento antes da resposta visível — uma pergunta simples já consumiu ~294 tokens só de raciocínio interno,
+>   zerando a resposta em alguns casos (sem erro, só sem texto). Subido para `2048`.
+> - **503 "model overloaded"** apareceu repetidas vezes em teste real, antes de qualquer chunk ser gerado.
+>   Adicionado retry automático (até 2 tentativas, 500ms/1500ms) para 503/429 em `gemini.ts`.
+> - Criado `07-glossario-negocio.md` (e espelhado em `contexto.ts`) — glossário de termos/métricas (curva ABC,
+>   positivação, RPA, atingimento, etc.) que só tinham uma linha de explicação, insuficiente pra quem não conhece
+>   o termo. Motivado por uma pergunta real no chat ("o que é a curva ABC de produtos?").
+> - UI do chat: indicador de "digitando" trocado de spinner pra texto "Pensando..." piscando, e adicionado botão
+>   "Limpar conversa".
+>
+> **Atualização (mesmo dia, decisão de escopo):** o assistente foi restringido pra responder **só negócio/uso**,
+> nunca nada técnico (arquitetura, banco, código, deploy) nem de segurança (RLS, criptografia, "é seguro?"),
+> mesmo perguntas inofensivas dessas categorias. Removidos de `contexto.ts` o resumo técnico (que cobria
+> `01-arquitetura.md`, `02-banco-de-dados.md`, `03-importacao-excel.md`, `04-regras-de-negocio.md`) e a seção
+> "Segurança dos dados" do Manual de Uso; a instrução de sistema em `gemini.ts` agora recusa esse tipo de
+> pergunta explicitamente. Ver `06-assistente-ia.md` (seção "Escopo").
 
 > **Atualização 17/09/2026 — causa raiz do login com Google em produção encontrada e corrigida (fecha o bloqueio de 15/09):**
 >
