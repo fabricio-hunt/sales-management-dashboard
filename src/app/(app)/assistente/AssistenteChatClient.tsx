@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,8 +89,21 @@ export function AssistenteChatClient({ nome }: { nome: string }) {
     }
   }
 
+  function limparConversa() {
+    setMensagens([]);
+    setInput("");
+  }
+
   return (
     <Card className="flex h-[70vh] flex-col overflow-hidden">
+      {mensagens.length > 0 && (
+        <div className="flex items-center justify-end border-b border-border px-3 py-2">
+          <Button variant="ghost" size="sm" onClick={limparConversa} disabled={enviando}>
+            <Eraser className="h-4 w-4" />
+            Limpar conversa
+          </Button>
+        </div>
+      )}
       <ScrollArea className="flex-1 px-4 py-4">
         {mensagens.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
@@ -125,7 +138,7 @@ export function AssistenteChatClient({ nome }: { nome: string }) {
                     mensagem.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
                   )}
                 >
-                  {mensagem.texto || <Loader2 className="h-4 w-4 animate-spin" aria-label="Pensando" />}
+                  {mensagem.texto || <span className="animate-pulse text-muted-foreground">Pensando...</span>}
                 </div>
               </div>
             ))}
