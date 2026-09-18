@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { Plus, Trash2, Save, ChevronDown, ChevronUp, KeyRound } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert } from "@/components/ui/alert"
 
 type Role = "manager" | "supervisor" | "vendedor"
 type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean; senha_provisoria: boolean; email: string | null }
@@ -152,6 +153,15 @@ export default function UsuariosAdminPage() {
         title="Usuários"
         subtitle="Cadastro de Managers, Supervisores e Vendedores. Permissões por módulo ficam em /admin/permissoes."
       />
+
+      <Alert variant="info" titulo="Login com Google exige e-mail já cadastrado aqui">
+        Não existe autocadastro: quem clicar em &quot;Entrar com Google&quot; só entra se o e-mail da conta
+        Google for idêntico ao e-mail cadastrado nesta tela e o usuário estiver marcado como Ativo. Quem
+        tentar com um e-mail não cadastrado recebe um aviso pra falar com um administrador. A senha inicial
+        continua obrigatória ao criar o usuário mesmo que a pessoa só vá usar o Google — ela só é cobrada se
+        a pessoa optar por entrar com e-mail/senha. No primeiro login pelo Google, a senha provisória é
+        liberada automaticamente.
+      </Alert>
 
       <Card>
         <CardHeader>

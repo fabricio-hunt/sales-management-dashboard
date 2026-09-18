@@ -93,6 +93,23 @@ users to sign up") desde 30/08/2026 — o app nunca chama `supabase.auth.signUp(
 restrito a manager), então deixar esse endpoint público aberto não tinha uso legítimo, só expunha uma superfície
 de auto-cadastro/enumeração de e-mail sem necessidade.
 
+**Login com Google (OAuth PKCE via Supabase)**, desde 15/09/2026 (`LoginForm.tsx` + `src/app/auth/callback/route.ts`):
+- O botão "Entrar com Google" chama `supabase.auth.signInWithOAuth`; o Supabase troca o consentimento do Google
+  por um `code`, devolvido em `redirectTo` (`/auth/callback?next=...`, calculado a partir de
+  `window.location.origin` — nunca hardcoded).
+- `/auth/callback/route.ts` troca o `code` pela sessão e só libera quem já tem uma linha **ativa** em `profiles`
+  com o mesmo e-mail da conta Google — não existe auto-cadastro por esse caminho. E-mail sem cadastro ou usuário
+  inativo cai em `/login?erro=sem-acesso`; qualquer outra falha (timeout, erro do Supabase) cai em
+  `/login?erro=oauth`. Todo o fluxo roda dentro de um timeout de 8s (`comTimeout`) pra nunca travar em silêncio
+  até o timeout da plataforma.
+- Primeiro login por Google zera `profiles.senha_provisoria` — essa flag só faz sentido pra quem loga por senha.
+- `proxy.ts` trata `/auth/callback` como rota pública (mesmo gate de `/login`), senão o middleware redireciona o
+  retorno do Google pro `/login` antes da troca de `code` rodar.
+- **Configuração no Supabase depende do domínio exato de produção** (Authentication > URL Configuration > Site
+  URL e Redirect URLs) — um domínio `.vercel.app` errado (ainda que pareça certo) faz o Supabase cair no
+  fallback do Site URL e o `code` nunca chega em `/auth/callback`. Ver incidente documentado em `PENDENCIAS.md`
+  (atualização de 17/09/2026).
+
 ## Criptografia
 
 - **Em repouso:** Supabase gerencia AES-256 no armazenamento subjacente (Postgres gerenciado) — fora do

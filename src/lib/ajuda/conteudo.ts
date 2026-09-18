@@ -194,11 +194,12 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
     resumo: "Quem tem login, com que papel, e quais representantes cada supervisor acompanha.",
     passos: [
       "Ao criar, defina uma senha inicial e passe para a pessoa: ela será obrigada a trocar no primeiro acesso.",
+      "Para entrar com Google, o e-mail da conta Google precisa ser idêntico ao e-mail cadastrado aqui — não há autocadastro por esse caminho.",
       "Para um supervisor, expanda a linha, marque os representantes e clique em Salvar atribuições.",
       "O ícone de chave redefine a senha de quem perdeu o acesso.",
     ],
     atencao:
-      "Supervisor sem representantes atribuídos enxerga zero em todas as telas de equipe. Não existe recuperação de senha por e-mail: redefinir aqui é o único caminho.",
+      "Supervisor sem representantes atribuídos enxerga zero em todas as telas de equipe. Não existe recuperação de senha por e-mail: redefinir aqui é o único caminho pra quem entra com e-mail/senha (quem usa Google não depende disso).",
   },
 
   "admin.permissoes": {
