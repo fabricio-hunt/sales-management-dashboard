@@ -2,24 +2,27 @@ import { AJUDA } from "@/lib/ajuda/conteudo";
 
 // Fonte de conhecimento do Assistente IA (módulo /assistente).
 //
-// MANUAL_USO e DOCS_TECNICOS são cópias estáticas de texto, não leitura em
-// runtime dos arquivos originais (docs/page.tsx e dashboard/docs/*.md) — uma
-// leitura via fs em runtime não é garantida no bundle serverless da Vercel,
-// que só inclui o que consegue rastrear estaticamente. Se o Manual de Uso ou
-// os docs técnicos mudarem, replique a mudança aqui manualmente. Não existe
-// pipeline de sync automático hoje.
+// MANUAL_USO e GLOSSARIO_NEGOCIO são cópias estáticas de texto, não leitura em
+// runtime do arquivo original (docs/page.tsx) — uma leitura via fs em runtime
+// não é garantida no bundle serverless da Vercel, que só inclui o que
+// consegue rastrear estaticamente. Se o Manual de Uso ou o glossário mudarem,
+// replique a mudança aqui manualmente (GLOSSARIO_NEGOCIO espelha
+// docs/07-glossario-negocio.md). Não existe pipeline de sync automático hoje.
 //
 // AJUDA é importada de src/lib/ajuda/conteudo.ts (não copiada), então essa
 // parte do contexto nunca fica desatualizada.
 //
-// Curadoria deliberada de segurança: o chat é aberto a todo usuário logado
-// (inclusive vendedor) e usa uma API externa (Gemini). Por isso ficam de fora
-// de propósito: PENDENCIAS.md, plano-implementacao-seguranca.md,
-// pitch-comercial.md, roteiro-aceitacao.md (conteúdo interno/comercial, não é
-// ajuda de uso) e as seções "Segurança (RLS)" e "Criptografia" de
-// 02-banco-de-dados.md (detalham a postura de segurança do sistema). O
-// inventário de telas de 05-componentes-e-layout.md também ficou de fora por
-// estar desatualizado e duplicar, de forma pior, o que já está no Manual.
+// Escopo deliberadamente restrito a negócio/uso (decisão de 18/09/2026): o
+// chat é aberto a todo usuário logado (inclusive vendedor) e usa uma API
+// externa (Gemini) — por isso o contexto NÃO inclui nada técnico
+// (arquitetura, banco de dados, stack, fluxo de importação em nível de
+// código) nem nada de segurança, mesmo o que seria inofensivo expor. Isso é
+// reforçado também na instrução de sistema em gemini.ts, que instrui o
+// modelo a recusar pergunta técnica/de segurança mesmo que soubesse
+// responder. Ficam de fora: PENDENCIAS.md, plano-implementacao-seguranca.md,
+// pitch-comercial.md, roteiro-aceitacao.md, 05-componentes-e-layout.md
+// (desatualizado) e os resumos técnicos de 01-arquitetura.md,
+// 02-banco-de-dados.md e 03-importacao-excel.md que estavam aqui antes.
 
 const MANUAL_USO = `
 ## 1. Primeiro acesso e senha
@@ -87,13 +90,7 @@ nenhum cálculo o usa ainda. As faixas atualmente cadastradas são um rascunho t
 precisam ser confirmadas antes de qualquer pagamento — avise o usuário desse ponto se ele perguntar sobre usar a
 comissão para pagamento real.
 
-## 6. Segurança dos dados (visão para o usuário final)
-O escopo de cada papel é aplicado no banco de dados, não só na interface — trocar o endereço no navegador não
-amplia o que alguém vê. Nenhuma tela grava dado direto no banco: toda alteração passa por uma checagem de
-permissão no servidor. Cada pessoa deve ter o próprio usuário — login compartilhado inutiliza o escopo por
-representante e o histórico de quem lançou o quê.
-
-## 7. Se algo não funcionar
+## 6. Se algo não funcionar
 - Tela vazia com aviso cinza: falta um passo de cadastro, e o próprio aviso diz qual e de quem é a vez.
 - Um item sumiu do menu: o papel do usuário não tem acesso a ele — o Manager libera em "Permissões".
 - Comissão zerada: o % de premiação do mês não foi cadastrado em "Metas por Fornecedor".
@@ -103,45 +100,75 @@ representante e o histórico de quem lançou o quê.
 Ao reportar um problema, o ideal é dizer em qual tela, qual mês e o que esperava ver.
 `.trim();
 
-const DOCS_TECNICOS = `
-## Arquitetura (visão geral, para perguntas mais técnicas)
-O sistema é um dashboard de gestão comercial para uma distribuidora, construído para substituir o controle
-mensal feito em planilha Excel — mesma linguagem visual e métricas que a equipe já usa (positivação, metas por
-fornecedor, distribuição, rankings), só que lendo direto do banco em vez de pivôs manuais. Stack: Next.js (App
-Router) no frontend, Tailwind CSS + shadcn/ui na interface, Supabase (PostgreSQL) como backend/banco.
-Princípio central: nenhum agregado (positivação, distribuição, financeiro, ranking) é copiado ou fixado no
-código — tudo é calculado ao vivo via consulta sobre a tabela de vendas. Isso existe porque, na planilha antiga,
-o mesmo número (ex.: positivação) podia aparecer diferente em abas diferentes por ser cópia manual desatualizada
-de outra aba.
+// Espelha docs/07-glossario-negocio.md — explica o que cada termo/métrica
+// SIGNIFICA (curva ABC, positivação, RPA, atingimento...), complementando o
+// Manual/Ajuda, que explicam só como usar cada tela. Criado depois de uma
+// pergunta real no chat ("o que é a curva ABC de produtos?") expor que esse
+// tipo de conceito só tinha uma linha de explicação.
+const GLOSSARIO_NEGOCIO = `
+## Curva ABC (de produtos)
+Técnica de classificação por concentração de faturamento: os produtos são ordenados do que mais vende para o
+que menos vende e divididos em três faixas — A (poucos itens, mas a maior parte do faturamento), B
+(intermediário) e C (muitos itens, pouca participação individual). Não é um conceito exclusivo deste sistema —
+é uma técnica padrão de gestão de estoque/portfólio. Na tela /produtos, serve para decidir onde focar atenção
+comercial e estoque.
 
-## Banco de dados (estrutura, para perguntas sobre de onde vem um número)
-Tabelas de dimensão: representantes, clientes (com vínculo a um representante — a "carteira"), fornecedores
-(com apelidos/aliases para casar com o nome usado no ERP), produtos.
-Tabela fato: vendas — um registro por item de pedido faturado, com valor líquido, quantidade, data, o
-representante/cliente/produto envolvidos, e a flag de positivação vinda direto do ERP.
-Configuração mensal: períodos (um por mês, com datas e dias úteis), metas (por representante × fornecedor ×
-mês), metas_representante (objetivos que não são por fornecedor), import_log (histórico de cada importação).
-Tudo que a planilha calculava via pivô manual (positivação, distribuição, financeiro por fornecedor) virou uma
-consulta/view sobre vendas, feita ao vivo pelas telas.
-
-## Importação de dados (fluxo)
-A tela "Importar Base" tem 5 importações independentes, cada uma podendo ser usada sozinha:
-- Vendas: única importação destrutiva — apaga e reinsere as vendas do período contido no arquivo (por isso pede
-  confirmação explícita antes de gravar). Reimportar o mesmo arquivo não duplica nada.
-- Fornecedores, Clientes, Metas, Objetivos por representante: aditivas (upsert) — atualizam cadastro existente e
-  criam o que falta, nunca apagam uma linha que não estava no arquivo enviado.
-Linhas sem cliente/produto/data válida não entram na importação de vendas, mas são contadas e reportadas como
-"linhas ignoradas", em vez de sumirem silenciosamente.
-
-## Regras de negócio (cálculos)
-Regra central: nenhuma tela guarda um número agregado pronto — positivação, distribuição, financeiro e rankings
-são sempre uma consulta ao vivo sobre as vendas importadas.
-Positivação: é a contagem de clientes distintos com venda no período (a flag de positivação vem pronta do ERP,
-linha a linha, e não é recalculada pelo sistema) — positivação de uma equipe soma a positivação de cada
+## Positivação
+Contagem de clientes distintos que compraram no período — não é contagem de pedidos. Dez pedidos do mesmo
+cliente no mês contam como uma positivação só. Positivação de uma equipe é a soma da positivação de cada
 representante, sem deduplicar cliente entre representantes diferentes.
-Tela de equipe: a meta financeira vem do cadastro em Metas por Fornecedor (não é mais calculada a partir de meta
-em caixas × preço médio); dias faturados/dias restantes são calculados ao vivo a partir dos dias com venda
-registrada no período.
+
+## Atingimento
+Percentual de uma meta já alcançado: realizado ÷ meta. Aparece em várias telas (equipe, comissão, faixas de
+comissão) sempre com esse mesmo sentido, mudando só o que é "realizado" (caixas, valor financeiro, positivação).
+
+## Realizado
+O resultado de fato, vindo das vendas já importadas no período — nunca é um número digitado ou estimado.
+
+## Ticket médio
+Valor médio por venda/cliente no período. Aparece no Comparativo Anual como um dos indicadores comparados entre
+os dois anos.
+
+## RPA
+Não é uma métrica — é como o sistema se refere a um representante nas telas e menus: "Visão Equipe (RPA)",
+"Gestão de Representantes (RPA)", o link "Ver RPA <id>", a coluna "RPA" nas tabelas de distribuição. Sempre que
+aparecer, é sinônimo de representante/vendedor.
+
+## % de premiação e Fator da faixa (comissão)
+% de premiação: taxa cadastrada em Metas por Fornecedor, por representante × fornecedor × mês — zerada, a
+comissão sai zero. Fator da faixa: multiplicador cadastrado em Faixas de Comissão, que depende de qual faixa de
+atingimento o representante caiu no mês (proporcional ou fator fixo, conforme a faixa).
+
+## Dias Faturado, Dias Restam e Dias Úteis
+Dias Úteis: cadastrado por mês em Configurações. Dias Faturado: contado ao vivo — dias distintos do mês com pelo
+menos uma venda registrada. Dias Restam: Dias Úteis − Dias Faturado.
+
+## Projeção de Fechamento
+Faturamento total até a data ÷ Dias Faturado × Dias Úteis — projeta o ritmo médio diário observado sobre os
+dias úteis que faltam.
+
+## Cadastro Total e Base Ativa
+Cadastro Total: quantos clientes estão vinculados ao representante. Base Ativa: dos vinculados, quantos têm
+status ativo. Contados a partir da tabela de clientes por padrão, com override manual possível quando o número
+do ERP não bate.
+
+## Desafio de Distribuição
+Meta de cobertura cadastrada por fornecedor (quantos clientes deveriam comprar aquele fornecedor no período). A
+tela /distribuicao compara esse desafio contra a cobertura real para apontar onde a distribuição está furada.
+
+## Faturamento Diário
+Visão dia a dia do faturamento do período, para enxergar ritmo e concentração de vendas. Dias sem venda aparecem
+como zero no gráfico — inclui fins de semana e feriados, não é sinal de falha.
+
+## Devolução
+Venda que voltou, identificada pela transação de devolução na base importada. Abate o realizado do período, e
+por isso também afeta atingimento e comissão. Só devoluções lançadas manualmente podem ser editadas — as vindas
+do import do ERP são só-leitura, porque seriam sobrescritas na reimportação do mês seguinte.
+
+## Fornecedor alias / fila "[Revisar]"
+O sistema mapeia a razão social do ERP (que varia de grafia entre exportações) para o "nome fantasia" usado nas
+telas via fornecedor_aliases. Razão social sem alias cadastrado gera automaticamente um fornecedor
+"[Revisar] <razão social>" — para não perder a venda — que aparece numa fila de revisão em /admin/fornecedores.
 `.trim();
 
 function formatarAjuda(): string {
@@ -163,6 +190,6 @@ ${MANUAL_USO}
 # Ajuda contextual por tela (o que cada tela do menu lateral responde)
 ${formatarAjuda()}
 
-# Documentação técnica de apoio (arquitetura, banco de dados, importação, regras de negócio)
-${DOCS_TECNICOS}
+# Glossário de conceitos e métricas (o que cada termo significa, não como usar a tela)
+${GLOSSARIO_NEGOCIO}
 `.trim();
