@@ -67,11 +67,16 @@ do cliente:
       ajuda de `admin.usuarios` já foi atualizado pra apontar pra Equipes como o caminho principal.
       Decidir depois se remove esse seletor antigo ou deixa como exceção manual.
 
-## Fase 3 — Ajustes de usabilidade nas telas que já existem
+## Fase 3 — Ajustes de usabilidade nas telas que já existem (feito em 22/09/2026)
 
-- [ ] Agrupar o seletor de representante em `/admin/metas` (e outras telas com um `<select>` de 41
-      representantes) por equipe — hoje é uma lista plana, ficou grande depois do import das 5
-      equipes.
+- [x] Componente `src/components/forms/RepresentanteSelect.tsx` — `<select>` com `<optgroup>` por
+      equipe (e "Sem equipe" pros que ainda não têm vínculo), substituindo a lista plana de 41
+      representantes. Aplicado nos 5 seletores que existiam: `admin/metas`, `admin/vendas`,
+      `admin/clientes`, `admin/usuarios` (form de criação + edição inline na tabela).
+- [x] De brinde, corrigido `react-hooks/set-state-in-effect` em `UsuariosClient.tsx` (dívida
+      pré-existente desde 27/08, estava na lista dos "3 erros" — o arquivo já ia ser tocado mesmo).
+      **Os outros 2 da lista original (`ComissoesClient.tsx:56`, `PermissoesClient.tsx:62`)
+      continuam pendentes** — fora do escopo desta fase, não foram tocados.
 
 ## Fase 4 — Resumo da Distribuição por equipe
 

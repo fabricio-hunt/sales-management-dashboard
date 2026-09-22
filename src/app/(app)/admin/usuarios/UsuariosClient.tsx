@@ -12,11 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { Plus, Trash2, Save, ChevronDown, ChevronUp, KeyRound } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { RepresentanteSelect } from "@/components/forms/RepresentanteSelect"
 import { Alert } from "@/components/ui/alert"
 
 type Role = "manager" | "supervisor" | "vendedor"
 type Usuario = { id: string; nome: string; role: Role; representante_id: string | null; ativo: boolean; senha_provisoria: boolean; email: string | null }
-type Representante = { id: string; nome: string }
+type Representante = { id: string; nome: string; equipe_id: string | null }
 
 const ROLE_LABEL: Record<Role, string> = { manager: "Manager", supervisor: "Supervisor", vendedor: "Vendedor" }
 
@@ -38,7 +39,7 @@ export default function UsuariosAdminPage() {
   async function load() {
     const [users, { data: reps }, { data: sup }] = await Promise.all([
       listarUsuarios(),
-      supabase.from("representantes").select("id, nome").order("id"),
+      supabase.from("representantes").select("id, nome, equipe_id").order("id"),
       supabase.from("supervisor_representantes").select("supervisor_id, representante_id"),
     ])
     setUsuarios(users || [])
@@ -51,7 +52,9 @@ export default function UsuariosAdminPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    (async () => { await load() })()
+  }, [])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -197,14 +200,13 @@ export default function UsuariosAdminPage() {
             {form.role === "vendedor" && (
               <div className="space-y-1.5">
                 <Label>Representante</Label>
-                <select
+                <RepresentanteSelect
+                  representantes={representantes}
                   value={form.representante_id}
-                  onChange={(e) => setForm((f) => ({ ...f, representante_id: e.target.value }))}
+                  onChange={(id) => setForm((f) => ({ ...f, representante_id: id }))}
+                  emptyLabel="Selecione..."
                   className="h-9 w-48 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {representantes.map((r) => <option key={r.id} value={r.id}>{r.id} — {r.nome}</option>)}
-                </select>
+                />
               </div>
             )}
             <Button type="submit" disabled={criando}><Plus className="w-4 h-4 mr-1" /> {criando ? "Criando..." : "Criar"}</Button>
@@ -263,14 +265,13 @@ export default function UsuariosAdminPage() {
                     </TableCell>
                     <TableCell>
                       {u.role === "vendedor" ? (
-                        <select
+                        <RepresentanteSelect
+                          representantes={representantes}
                           value={u.representante_id ?? ""}
-                          onChange={(e) => updateLocal(u.id, "representante_id", e.target.value || null)}
+                          onChange={(id) => updateLocal(u.id, "representante_id", id || null)}
+                          emptyLabel="- nenhum -"
                           className="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
-                        >
-                          <option value="">- nenhum -</option>
-                          {representantes.map((r) => <option key={r.id} value={r.id}>{r.id} — {r.nome}</option>)}
-                        </select>
+                        />
                       ) : u.role === "supervisor" ? (
                         <button
                           onClick={() => setExpandido(expandido === u.id ? null : u.id)}

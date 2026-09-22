@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { Plus, Trash2, Save, ShoppingCart } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { RepresentanteSelect } from "@/components/forms/RepresentanteSelect"
 
 type Role = "manager" | "supervisor" | "vendedor"
-type Representante = { id: string; nome: string }
+type Representante = { id: string; nome: string; equipe_id: string | null }
 type Cliente = { id: string; razao_social: string | null; fantasia: string | null; representante_id: string | null }
 type Produto = { id: string; descricao: string | null }
 type LancamentoRow = {
@@ -207,13 +208,12 @@ export default function VendasClient({
             {podeEscolherRepresentante && (
               <div className="space-y-1.5">
                 <Label>Representante</Label>
-                <select
+                <RepresentanteSelect
+                  representantes={representantes}
                   value={representanteId}
-                  onChange={(e) => { setRepresenteId(e.target.value); setClienteId("") }}
+                  onChange={(id) => { setRepresenteId(id); setClienteId("") }}
                   className="h-9 w-52 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
-                >
-                  {representantes.map((r) => <option key={r.id} value={r.id}>{r.id} — {r.nome}</option>)}
-                </select>
+                />
               </div>
             )}
             <div className="space-y-1.5">

@@ -11,7 +11,7 @@ export default async function Page() {
   const escopo = await representantesEscopo(profile);
 
   const [{ data: representantesTodos }, { data: clientes }, { data: produtos }, { data: lancamentos }] = await Promise.all([
-    supabase.from("representantes").select("id, nome").order("id"),
+    supabase.from("representantes").select("id, nome, equipe_id").order("id"),
     // RLS já escopa clientes por representante — vendedor só recebe a própria carteira.
     supabase.from("clientes").select("id, razao_social, fantasia, representante_id").eq("status", "ativo").order("fantasia"),
     supabase.from("produtos").select("id, descricao").order("descricao").limit(3000),

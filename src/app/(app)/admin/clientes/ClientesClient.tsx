@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { Pencil, Trash2, Plus, X, Search, Save } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { RepresentanteSelect } from "@/components/forms/RepresentanteSelect"
 
 type Cliente = {
   id: string
@@ -31,7 +32,7 @@ type Cliente = {
   created_at: string
 }
 
-type Representante = { id: string; nome: string }
+type Representante = { id: string; nome: string; equipe_id: string | null }
 
 const emptyForm = {
   id: "",
@@ -56,7 +57,7 @@ export default function ClientesAdminPage() {
   async function loadClientes() {
     const [{ data: cli, error }, { data: reps }] = await Promise.all([
       supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(500),
-      supabase.from("representantes").select("id, nome").order("id"),
+      supabase.from("representantes").select("id, nome, equipe_id").order("id"),
     ])
 
     if (error) {
@@ -73,7 +74,7 @@ export default function ClientesAdminPage() {
     (async () => {
       const [{ data: cli, error }, { data: reps }] = await Promise.all([
         supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(500),
-        supabase.from("representantes").select("id, nome").order("id"),
+        supabase.from("representantes").select("id, nome, equipe_id").order("id"),
       ])
       if (error) {
         toast.error("Erro ao carregar clientes")
@@ -217,18 +218,14 @@ export default function ClientesAdminPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="representante_id">Representante</Label>
-                    <select
+                    <RepresentanteSelect
                       id="representante_id"
-                      name="representante_id"
+                      representantes={representantes}
                       value={formData.representante_id}
-                      onChange={handleChange}
+                      onChange={(id) => setFormData((prev) => ({ ...prev, representante_id: id }))}
+                      emptyLabel="- Sem representante -"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                    >
-                      <option value="">- Sem representante -</option>
-                      {representantes.map(r => (
-                        <option key={r.id} value={r.id}>{r.id} — {r.nome}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>

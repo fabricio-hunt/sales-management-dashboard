@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Save } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { RepresentanteSelect } from "@/components/forms/RepresentanteSelect"
 
 type Fornecedor = { id: number; nome_fantasia: string }
-type Representante = { id: string; nome: string }
+type Representante = { id: string; nome: string; equipe_id: string | null }
 type MetaLinha = {
   fornecedor_id: number
   meta_cx: number
@@ -58,7 +59,7 @@ export default function MetasAdminPage() {
   useEffect(() => {
     (async () => {
       const [{ data: reps }, { data: forns }] = await Promise.all([
-        supabase.from("representantes").select("id, nome").order("id"),
+        supabase.from("representantes").select("id, nome, equipe_id").order("id"),
         supabase.from("fornecedores").select("id, nome_fantasia").order("nome_fantasia"),
       ])
       setRepresentantes(reps || [])
@@ -198,13 +199,7 @@ export default function MetasAdminPage() {
         </div>
         <div className="space-y-1.5">
           <Label>Representante</Label>
-          <select
-            value={repId}
-            onChange={(e) => setRepId(e.target.value)}
-            className="h-9 w-64 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
-          >
-            {representantes.map(r => <option key={r.id} value={r.id}>{r.id} — {r.nome}</option>)}
-          </select>
+          <RepresentanteSelect representantes={representantes} value={repId} onChange={setRepId} />
         </div>
       </div>
 
