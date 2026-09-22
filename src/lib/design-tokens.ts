@@ -14,7 +14,20 @@ export const tokens = {
     positive: "#16A34A",
     negative: "#DC2626",
     neutral: "#9CA3AF",
-    chartPalette: ["#2563EB", "#0EA5E9", "#8B5CF6", "#F59E0B", "#10B981"],
+    // Ordem fixa, validada para separação sob daltonismo (protanopia/tritanopia) nos
+    // pares adjacentes — nunca reordenar nem ciclar para atribuir identidade (ex.: cor
+    // de equipe). Cabe até 8 categorias; a partir da 9ª, agrupar em "Outros" ou usar
+    // small multiples em vez de gerar uma nova cor.
+    chartPalette: [
+      "#2a78d6", // 1 azul
+      "#eb6834", // 2 laranja
+      "#1baf7a", // 3 verde-água
+      "#eda100", // 4 amarelo
+      "#e87ba4", // 5 magenta
+      "#008300", // 6 verde
+      "#4a3aa7", // 7 violeta
+      "#e34948", // 8 vermelho
+    ],
   },
   radius: { card: "12px", input: "8px", pill: "999px" },
   shadow: { card: "0 1px 2px rgba(16,24,40,0.05)" },

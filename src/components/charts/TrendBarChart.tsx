@@ -1,27 +1,21 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { tokens } from "@/lib/design-tokens";
 import { formatValue, type ValueFormat } from "@/lib/format-value";
 
-interface TrendLineChartProps {
+interface TrendBarChartProps {
   data: { label: string; value: number }[];
   format?: ValueFormat;
   color?: string;
 }
 
-export function TrendLineChart({ data, format = "number", color = tokens.colors.accent }: TrendLineChartProps) {
+export function TrendBarChart({ data, format = "number", color = tokens.colors.accent }: TrendBarChartProps) {
   const fmt = (v: number) => formatValue(v, format);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.18} />
-            <stop offset="100%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        </defs>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke={tokens.colors.border} />
         <XAxis
           dataKey="label"
@@ -47,10 +41,10 @@ export function TrendLineChart({ data, format = "number", color = tokens.colors.
             fontSize: 12,
             boxShadow: tokens.shadow.card,
           }}
-          cursor={{ stroke: tokens.colors.border }}
+          cursor={{ fill: tokens.colors.background }}
         />
-        <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2} fill="url(#trendFill)" />
-      </AreaChart>
+        <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} maxBarSize={18} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }

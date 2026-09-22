@@ -4,44 +4,35 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Too
 import { tokens } from "@/lib/design-tokens";
 import { formatValue, type ValueFormat } from "@/lib/format-value";
 
-interface CategoryBarChartProps {
-  // `color` por item é opcional — quando ausente, cai no `color`/accent único do
-  // gráfico (mesmo comportamento de antes). Usar por item quando a cor carrega
-  // identidade (ex.: uma barra por equipe).
+interface DistributionBarChartProps {
   data: { label: string; value: number; color?: string }[];
   format?: ValueFormat;
-  color?: string;
 }
 
-const truncate = (label: string, max = 20) => (label.length > max ? `${label.slice(0, max - 1)}…` : label);
-
-export function CategoryBarChart({ data, format = "number", color = tokens.colors.accent }: CategoryBarChartProps) {
+export function DistributionBarChart({ data, format = "number" }: DistributionBarChartProps) {
   const fmt = (v: number) => formatValue(v, format);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} layout="vertical" margin={{ top: 0, right: 64, left: 8, bottom: 0 }}>
-        <CartesianGrid horizontal={false} stroke={tokens.colors.border} />
+      <BarChart data={data} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke={tokens.colors.border} />
         <XAxis
-          type="number"
-          stroke={tokens.colors.textSecondary}
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(v) => fmt(v)}
-        />
-        <YAxis
-          type="category"
           dataKey="label"
           stroke={tokens.colors.textSecondary}
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          width={132}
-          tickFormatter={(v: string) => truncate(v)}
+        />
+        <YAxis
+          stroke={tokens.colors.textSecondary}
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => fmt(v)}
+          width={72}
         />
         <Tooltip
-          formatter={(value) => [fmt(Number(value)), "Valor"]}
+          formatter={(value, name) => [fmt(Number(value)), String(name)]}
           contentStyle={{
             borderRadius: 8,
             border: `1px solid ${tokens.colors.border}`,
@@ -50,13 +41,13 @@ export function CategoryBarChart({ data, format = "number", color = tokens.color
           }}
           cursor={{ fill: tokens.colors.background }}
         />
-        <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={22}>
-          {data.map((entry) => (
-            <Cell key={entry.label} fill={entry.color ?? color} />
+        <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={64}>
+          {data.map((entry, i) => (
+            <Cell key={entry.label} fill={entry.color ?? tokens.colors.chartPalette[i % tokens.colors.chartPalette.length]} />
           ))}
           <LabelList
             dataKey="value"
-            position="right"
+            position="top"
             formatter={(v) => fmt(Number(v))}
             fontSize={11}
             fill={tokens.colors.textSecondary}

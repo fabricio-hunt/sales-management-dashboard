@@ -6,7 +6,7 @@ import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
-import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { TrendBarChart } from "@/components/charts/TrendBarChart";
 import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
@@ -78,7 +78,7 @@ export default async function FaturamentoDiaPage({
       </KpiGrid>
 
       <ChartCard title="Evolução no mês" subtitle={`${dias.length} dia(s) com venda registrada.`} isEmpty={dias.length === 0}>
-        <TrendLineChart data={chartData} format="currency-compact" />
+        <TrendBarChart data={chartData} format="currency-compact" />
       </ChartCard>
 
       <div className="rounded-xl border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.05)]">

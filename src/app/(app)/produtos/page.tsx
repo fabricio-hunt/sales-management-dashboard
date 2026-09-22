@@ -7,7 +7,7 @@ import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
-import { DistributionDonut } from "@/components/charts/DistributionDonut";
+import { DistributionBarChart } from "@/components/charts/DistributionBarChart";
 import { tokens } from "@/lib/design-tokens";
 import { resolveMes, formatMes } from "@/lib/periodo";
 
@@ -89,7 +89,7 @@ export default async function ProdutosPage({
     valorPorClasse[p.classe as "A" | "B" | "C"] += p.venda_liq;
   }
 
-  const donutData = (["A", "B", "C"] as const)
+  const classeChartData = (["A", "B", "C"] as const)
     .filter((c) => valorPorClasse[c] > 0)
     .map((c) => ({ label: `Classe ${c}`, value: valorPorClasse[c], color: classeChartColor[c] }));
 
@@ -113,9 +113,9 @@ export default async function ProdutosPage({
       <ChartCard
         title="Distribuição por classe"
         subtitle="Participação de cada classe no faturamento do período."
-        isEmpty={donutData.length === 0}
+        isEmpty={classeChartData.length === 0}
       >
-        <DistributionDonut data={donutData} format="currency-compact" />
+        <DistributionBarChart data={classeChartData} format="currency-compact" />
       </ChartCard>
 
       <Card>

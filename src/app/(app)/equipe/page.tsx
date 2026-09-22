@@ -9,7 +9,7 @@ import { MesFilter } from "@/components/layout/MesFilter";
 import { KpiGrid } from "@/components/data-display/KpiGrid";
 import { KpiCard } from "@/components/data-display/KpiCard";
 import { ChartCard } from "@/components/data-display/ChartCard";
-import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { TrendBarChart } from "@/components/charts/TrendBarChart";
 import { resolveMes, formatMes } from "@/lib/periodo";
 
 export const revalidate = 0;
@@ -252,7 +252,7 @@ export default async function EquipePage({
         subtitle={`Receita líquida acumulada por dia — ${fmtCur(receitaTotalGlobal)} no mês`}
         isEmpty={chartData.length === 0}
       >
-        <TrendLineChart data={chartData} format="currency-compact" />
+        <TrendBarChart data={chartData} format="currency-compact" />
       </ChartCard>
 
       {/* ─── SCORECARDS ─── */}
