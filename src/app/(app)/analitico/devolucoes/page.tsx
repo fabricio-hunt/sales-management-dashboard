@@ -87,7 +87,7 @@ export default async function DevolucoesPage({
       </KpiGrid>
 
       <ChartCard title="Valor devolvido por motivo" subtitle="Top motivos no período." isEmpty={chartData.length === 0}>
-        <CategoryBarChart data={chartData} format="currency-compact" color="#DC2626" />
+        <CategoryBarChart data={chartData} format="currency-compact" />
       </ChartCard>
 
       <Card>

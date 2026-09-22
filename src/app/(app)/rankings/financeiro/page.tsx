@@ -61,7 +61,7 @@ export default async function RankingFinanceiroPage({
       />
 
       <ChartCard title="Faturamento por representante" isEmpty={chartData.length === 0}>
-        <CategoryBarChart data={chartData} format="currency-compact" color="#10B981" />
+        <CategoryBarChart data={chartData} format="currency-compact" />
       </ChartCard>
 
       <Card>

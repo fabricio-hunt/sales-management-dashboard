@@ -64,7 +64,7 @@ export default async function RankingVendedoresPage({
       />
 
       <ChartCard title="Faturamento — top 10" isEmpty={chartData.length === 0}>
-        <CategoryBarChart data={chartData} format="currency-compact" color="#10B981" />
+        <CategoryBarChart data={chartData} format="currency-compact" />
       </ChartCard>
 
       <Card>
