@@ -15,6 +15,15 @@ entre telas (ver `04-regras-de-negocio.md` pra o porquê disso ser a regra centr
   correspondente. Fornecedores novos detectados no import são auto-criados como `[Revisar] <razão social>` e
   aparecem numa fila de revisão em `/admin/fornecedores`.
 - **`produtos`**: `id` (Código Produto), `descricao`, `fornecedor_nome` (bruto, auditoria), `fornecedor_id`.
+- **`equipes`** (`supabase_migration_v2_6.sql`, 22/09/2026): `id` (número da equipe vindo do ERP, ex: "94"), `cor`
+  (hex, atribuída pela app na criação a partir da `chartPalette` de `design-tokens.ts`, fixa depois — não editável
+  em tela), `supervisor_id` (→ `profiles`, nullable). `representantes.equipe_id` faz o vínculo (1:1 — um
+  representante pertence a no máximo uma equipe). **6 das 7 equipes já gravadas** (92 Campinas, 93 Sorocaba, 94
+  Jundiaí, 95 EQ. SP, 96 EQ. Sul, 97 EQ. Itape — `scripts/seed_equipes_v1.mjs`, cor aprovada pelo cliente em 22/09),
+  falta só o número da 7ª. `equipe_id` só está preenchido pros 7 representantes da equipe 94 — as outras 5 equipes
+  ainda não têm representante nenhum na tabela `representantes` porque suas planilhas nunca passaram pelo import
+  mensal (ver `PENDENCIAS.md`). Histórico de vendas/metas conta pela equipe atual do representante via join ao
+  vivo, sem snapshot — nenhum backfill necessário quando os vínculos forem preenchidos.
 
 ## Tabela fato: `vendas`
 
@@ -64,7 +73,7 @@ direta a `pg_policies` — não apenas o que a migration deveria ter feito:
   `fornecedores`, `fornecedor_aliases`, `periodos`, `metas`, `metas_representante`, `import_log`) retornam 0 linhas
   pra uma requisição PostgREST sem sessão, usando só a `anon key` pública do bundle do browser.
 - **Dimensões** (`representantes`, `produtos`, `fornecedores`, `periodos`, `fornecedor_aliases`, `import_log`,
-  `modulos`, `permissoes_role`) — liberadas pra qualquer usuário `authenticated`.
+  `modulos`, `permissoes_role`, `equipes`) — liberadas pra qualquer usuário `authenticated`.
 - **Tabelas escopadas por representante** (`vendas`, `clientes`, `metas`, `metas_representante`) — via
   `pode_ver_representante()` (`SECURITY DEFINER`, `supabase_migration_v2.sql:135-155`), que resolve o escopo do
   vendedor (só o próprio `representante_id`) e do supervisor (via `supervisor_representantes`).

@@ -42,6 +42,13 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
 
 // Representantes que o usuário pode enxergar: "todos" pro manager (sem
 // restrição, comportamento atual), lista de ids pra supervisor/vendedor.
+//
+// Supervisor (v2.7, 22/09/2026): o escopo agora vem principalmente da equipe
+// (representantes.equipe_id -> equipes.supervisor_id = ele), espelhando
+// pode_ver_representante() no banco. supervisor_representantes (vínculo
+// manual antigo) continua somado por segurança — sem tirar acesso que já
+// existisse — mas deixou de ser o caminho principal; ver
+// docs/plano-implementacao-equipes.md.
 export async function representantesEscopo(profile: Profile): Promise<string[] | "todos"> {
   if (profile.role === "manager") return "todos";
 
@@ -50,11 +57,14 @@ export async function representantesEscopo(profile: Profile): Promise<string[] |
   }
 
   const supabase = await createServerSupabase();
-  const { data } = await supabase
-    .from("supervisor_representantes")
-    .select("representante_id")
-    .eq("supervisor_id", profile.id);
-  return (data ?? []).map((r) => r.representante_id);
+  const [{ data: daEquipe }, { data: manual }] = await Promise.all([
+    supabase.from("representantes").select("id, equipes!inner(supervisor_id)").eq("equipes.supervisor_id", profile.id),
+    supabase.from("supervisor_representantes").select("representante_id").eq("supervisor_id", profile.id),
+  ]);
+  const ids = new Set<string>();
+  for (const r of daEquipe ?? []) ids.add(r.id);
+  for (const r of manual ?? []) ids.add(r.representante_id);
+  return [...ids];
 }
 
 // Interseção entre o que a tela pediu (?rep=) e o que o usuário pode ver.

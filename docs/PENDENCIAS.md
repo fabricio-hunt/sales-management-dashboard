@@ -2,6 +2,147 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 22/09/2026 (parte 5) — decisão de tocar o projeto sem depender de validação do
+> cliente; Fase 1 e 2 do plano de equipes:**
+>
+> Cliente difícil de acessar pra validar as perguntas 7/8/9/14 (via "Alex Pai"). Decisão do usuário:
+> parar de bloquear nisso — supervisor cadastrado pelo Manager, 1 equipe por supervisor (já
+> confirmado 1:1 pela pergunta 3), vendedor com meta definida direto pelo Manager (sem cascata,
+> sem o plano de produto-por-dia do áudio). Ver `docs/plano-implementacao-equipes.md` (novo) pro
+> plano completo em fases.
+>
+> **Fase 1 (fundação de acesso):** `supabase_migration_v2_7.sql` (pendente de execução) — 1
+> supervisor : 1 equipe (`UNIQUE`), e `pode_ver_representante()` reescrita pra escopo vir da
+> equipe (`representantes.equipe_id` → `equipes.supervisor_id`), mantendo OR com o vínculo manual
+> antigo (`supervisor_representantes`, confirmado vazio em produção) por segurança.
+> `representantesEscopo()` (app-layer) espelhada. `tsc`/`eslint` limpos.
+>
+> **Fase 2 (tela `/admin/equipes`):** feita — Manager cria equipe (cor automática), atribui/troca
+> supervisor, reatribui representante entre equipes, tudo direto na tela, sem precisar de mim nem
+> do cliente. Módulo `admin.equipes` na matriz (manager-only), Sidebar e ajuda contextual
+> atualizados. `admin.usuarios` (seletor manual antigo de representante-por-representante) ainda
+> não foi removido — decisão adiada pra quando revisitar essa tela. — importadas as 5 equipes que faltavam:**
+>
+> `scripts/import_equipes_restantes.mjs` (novo, replica fielmente a lógica de
+> `/api/admin/import/vendas/route.ts` direto com a service role key, já que a rota HTTP exige
+> sessão de manager que este processo não tem). Rodado primeiro em modo relatório (dry run), depois
+> com `--write` após checar os períodos detectados. Resultado, confirmado programaticamente:
+>
+> | Equipe | Região | Representantes | Vendas gravadas |
+> |---|---|---|---|
+> | 92 | Campinas | 4 | 3.382 |
+> | 93 | Sorocaba | 8 | 6.547 |
+> | 95 | EQ. SP | 10 | 10.753 |
+> | 96 | EQ. Sul | 7 | 4.563 |
+> | 97 | EQ. Itape | 5 | 4.372 |
+>
+> Total agora: **37.060 vendas, 41 representantes** (era 7.443/7 antes, só da equipe 94).
+> `representantes.equipe_id` gravado pra todos os 41. Cada equipe importada com o período real dela
+> (nem todas foram 03/08 a 31/08 — 95 vai só até 25/08, 97 começa em 04/08).
+>
+> **Achado pra confirmar com o cliente (mesmo padrão da divergência 471×485 do representante 90):**
+> o representante **213** tem aba própria na planilha da equipe **97**, mas as vendas reais de
+> agosto dele vieram no `DD PEDIDOS` da equipe **93** — ficou vinculado à 93 (seguiu o dado real de
+> venda, não a aba de resumo, mesmo princípio de "vendas é a fonte única" já usado no resto do
+> sistema). O representante **313** apareceu nas vendas da equipe **96** sem ter aba própria lá —
+> ficou vinculado à 96. Nenhum dos dois bloqueia nada, só pode estar errado se o representante
+> tiver mudado de equipe no meio do mês e o vínculo correto for outro.
+
+> **Atualização 22/09/2026 (parte 3) — cores das equipes gravadas; achado grave: só equipe 94
+> (Jundiaí) já foi importada:**
+>
+> **Confusão do cliente resolvida com dado real.** Ele mandou 308/310/312/401/407/408/90 como se
+> fossem "os números das 7 equipes" — na verdade são os 7 **representantes** que compõem a equipe
+> **94** (cada um é uma aba dentro do arquivo `EQUIPE 94.xlsx`, confirmado abrindo o arquivo e
+> batendo contra `scripts/seed_metas_v1.mjs`, que já usava esses mesmos 7 IDs). Reabertas as 6
+> planilhas de `equipe-de-vendas/` pra extrair a região de cada equipe direto da célula (não do
+> nome da aba, que é genérico "Equipe"/"EQUIPE"): **92 = Campinas** (achado novo — o doc anterior
+> dizia que 92 não tinha rótulo, estava errado, só não tínhamos olhado o conteúdo da célula) e
+> **93 = Sorocaba** (idem). Region por equipe agora completa: 92 Campinas, 93 Sorocaba, 94 Jundiaí,
+> 95 EQ. SP, 96 EQ. Sul, 97 EQ. Itape. **Ainda falta o número da 7ª equipe** — não existe arquivo
+> pra ela em `equipe-de-vendas/`.
+>
+> **ACHADO GRAVE: só a equipe 94 já foi importada pro banco, alguma vez.** Conferido
+> programaticamente contra produção: dos representantes das outras 5 equipes (92: 105/175/822/114,
+> 93: 201-208, 95: 113/311/314-318/414/415/425, 96: 307/309/320-323, 97: 209/211/213-216), **zero**
+> existem na tabela `representantes` — só os 7 da equipe 94 estão lá. Ou seja, as planilhas de
+> Campinas, Sorocaba, EQ. SP, EQ. Sul e EQ. Itape **nunca passaram pelo import mensal**. O sistema
+> hoje só reflete uma das 7 equipes. Isso não bloqueia o schema de `equipes` (não depende de dado),
+> mas significa que o Resumo da Distribuição por equipe vai mostrar 6 equipes vazias até essas 5
+> planilhas serem importadas — é um trabalho de import, não de schema, e maior do que parecia.
+>
+> **Cores definidas e aprovadas pelo cliente ("aprovado", 22/09).** Reaproveitada a `chartPalette`
+> de 8 cores que o dashboard já usa (validada contra daltonismo), sem inventar paleta nova —
+> preview visual publicado como artifact antes de gravar, já que a cor é fixa pra sempre. Atribuída
+> em ordem crescente do número de equipe. `scripts/seed_equipes_v1.mjs` (novo, idempotente) gravou
+> em produção, confirmado programaticamente:
+>
+> | Equipe | Região | Cor |
+> |---|---|---|
+> | 92 | Campinas | `#2a78d6` azul |
+> | 93 | Sorocaba | `#eb6834` laranja |
+> | 94 | Jundiaí | `#1baf7a` verde-água |
+> | 95 | EQ. SP | `#eda100` amarelo |
+> | 96 | EQ. Sul | `#e87ba4` magenta |
+> | 97 | EQ. Itape | `#008300` verde |
+> | *(falta a 7ª)* | — | reservada: `#4a3aa7` violeta |
+>
+> `representantes.equipe_id = '94'` também gravado pros 7 representantes que já existem no banco
+> (únicos com dado real hoje). As outras 5 equipes ficam com 0 representante vinculado até o import.
+
+> **Atualização 22/09/2026 (parte 2) — implementado o que já podia ser feito sem depender de
+> resposta nova (schema de `equipes` + recolorir rankings):**
+>
+> **`supabase_migration_v2_6.sql` — rodada em produção e verificada programaticamente.** Cria
+> `equipes` (id = número vindo do ERP, `cor` hex atribuída pela app/fixa, `supervisor_id` →
+> `profiles`, nullable) e `representantes.equipe_id` (FK simples, garante 1:1 por construção). RLS
+> igual às demais dimensões (`TO authenticated`, sem policy de escrita) — confirmado: `equipes` via
+> `anon key` sem sessão devolve 0 linhas. **Schema pronto, mas ainda sem dado real** — `equipes` com
+> 0 linhas, `representantes.equipe_id` null em todos — faltam os 7 números de equipe e os
+> supervisores (perguntas de acompanhamento abaixo). Histórico conta pela equipe atual via join ao
+> vivo (vendas → representantes → equipes), sem precisar de backfill quando os vínculos forem
+> preenchidos. Documentado em `02-banco-de-dados.md`.
+>
+> **Rankings recoloridos (pergunta 12 = "sim").** `CategoryBarChart` (usado em `rankings/clientes`,
+> `rankings/financeiro`, `rankings/positivacao`, `rankings/vendedores`, `analitico/cliente`,
+> `analitico/devolucoes`) ganhou o mesmo fallback de cor por item que o `DistributionBarChart` já
+> tinha: cicla pela `chartPalette` de 8 cores por índice quando não há `color` explícito. Removido o
+> `color="#10B981"`/`color="#DC2626"` fixo de financeiro/vendedores/devoluções pra habilitar o
+> ciclo. `tsc` limpo; eslint rodando.
+>
+> **Não implementado ainda (fica pra quando a equipe 1 tiver dado real ou resposta do Alex Pai):**
+> tela de administração de equipes (`/admin/equipes`), Resumo da Distribuição por equipe, mecanismo
+> de meta em cascata, filtro por equipe no Analítico de Vendas.
+
+> **Atualização 22/09/2026 — cliente respondeu 15/15 perguntas do refinamento (equipes/metas):**
+>
+> Das 15 perguntas em `08-refinamento-graficos-equipes-metas.md`, 8 ficaram totalmente resolvidas
+> (representante pertence a 1 única equipe; número de equipe é fixo mesmo com rotatividade; cor
+> atribuída automaticamente pelo sistema e fixa entre gráficos; histórico retroagido por equipe;
+> meta diária convive com as metas atuais, não substitui; recolorir rankings também; drill-down
+> por representante continua necessário). Detalhe completo pergunta a pergunta na seção 4 daquele
+> documento.
+>
+> **2 geraram pergunta de acompanhamento nova:** o nome de região nas planilhas (Jundiaí, EQ. SP
+> etc.) não identifica o supervisor — ainda falta saber quem é o supervisor de cada equipe. E
+> "Base Ativa" x "o que está ativo" são confirmados como dois números diferentes (cadastro vs.
+> compra recente), mas falta o período exato que define "ativo".
+>
+> **1 pergunta precisa ser refeita** — a sobre o número da equipe que falta (92-97, faltando 1 pra
+> fechar 7) citava nome de arquivo interno nosso, o cliente não entendeu a referência.
+>
+> **1 resposta contradisse a leitura do áudio de 21/09:** o cliente confirmou que a meta diária
+> **não** é um plano de produto-por-dia-da-semana (o exemplo da Sheila/Prestígio/Xoquito não é
+> isso). Mas não ficou claro o que a meta diária é de fato — essa dúvida se junta à pergunta 7.
+>
+> **3 perguntas foram encaminhadas para "Alex Pai"** — pessoa ainda não identificada em nenhum
+> documento do projeto (papel dele não confirmado): se a "Meta Dia" já existente na planilha é a
+> meta que o Manager vai definir (pergunta 7); se o resumo por equipe substitui `/distribuicao`
+> (pergunta 11); se o vendedor mantém acesso de login (pergunta 14). Sem essas respostas, o
+> mecanismo de meta em cascata (2.3) segue bloqueado — mas o schema de `equipes` (2.4) já tem
+> decisão suficiente pra começar, faltando só os dados de cadastro (números das 7 equipes e
+> supervisores).
+
 > **Atualização 21/09/2026 (parte 2) — gráficos implementados; áudio do cliente + planilhas
 > `equipe-de-vendas/` revisam as perguntas em aberto:**
 >

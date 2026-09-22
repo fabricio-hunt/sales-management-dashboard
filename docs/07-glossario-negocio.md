@@ -43,6 +43,12 @@ menus: "Visão Equipe (RPA)", "Gestão de Representantes (RPA)", o link "Ver RPA
 coluna "RPA" nas tabelas de distribuição. Sempre que aparecer "RPA" numa tela ou num link, é sinônimo de
 representante/vendedor — geralmente seguido do código dele (o mesmo `id` usado no ERP).
 
+## Representante vs. Equipe
+
+Representante é uma pessoa que vende; equipe é um grupo de representantes sob um supervisor. Os dois são só
+números (ex.: representante "308", equipe "94"), o que confunde fácil — ver `09-representante-vs-equipe.md` pra
+explicação completa com exemplo real das planilhas.
+
 ## % de premiação e Fator da faixa (comissão)
 
 Dois números diferentes que se multiplicam para chegar na comissão (ver `04-regras-de-negocio.md` /

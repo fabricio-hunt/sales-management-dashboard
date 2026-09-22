@@ -160,11 +160,23 @@ e trazem dado novo:
 - **Números reais das equipes:** 92, 93, 94, 95, 96 e 97 — **falta um arquivo pra fechar as 7**
   que o cliente mencionou. Não são "1 a 7": são códigos no estilo do ERP, iguais ao padrão já
   visto em `representante_id` (ex.: "308", "90").
-- **Cada planilha traz um nome de região** na célula de título da aba `Equipe`: 94 = **Jundiaí**
-  (bate com o título já exibido em `/equipe` no sistema hoje), 95 = **EQ. SP**, 96 = **EQ. Sul**,
-  97 = **EQ. Itape**. 92 e 93 não têm rótulo de região, só "Equipe"/"EQUIPE". Não é o nome do
-  supervisor — é só um rótulo, então quem é o supervisor responsável por cada uma ainda não está
-  confirmado.
+- **Cada planilha traz um nome de região** na célula de título da aba (o nome da ABA em si é
+  genérico, "Equipe"/"EQUIPE" — o rótulo de região está no conteúdo da célula, não no nome da
+  aba): 92 = **Campinas**, 93 = **Sorocaba**, 94 = **Jundiaí** (bate com o título já exibido em
+  `/equipe` no sistema hoje), 95 = **EQ. SP**, 96 = **EQ. Sul**, 97 = **EQ. Itape**. Correção de
+  22/09: a versão anterior deste documento dizia que 92/93 não tinham rótulo — checamos só o nome
+  da aba, não o conteúdo da célula. Não é o nome do supervisor — é só um rótulo de região, então
+  quem é o supervisor responsável por cada uma ainda não está confirmado.
+- **Cada arquivo de equipe tem uma aba por representante**, nomeada com o próprio ID (confirma a
+  hipótese "1 arquivo = 1 equipe, várias abas = vários representantes", achado de 22/09 depois do
+  cliente confundir representante com equipe): 92 → 105, 175, 822, 114; 93 → 201, 202, 203, 205,
+  206, 207, 208; 94 → 308, 310, 312, 401, 407, 408, 90; 95 → 113, 311, 314, 315, 316, 317, 318,
+  414, 415, 425; 96 → 307, 309, 320, 321, 322, 323; 97 → 209, 211, 213, 214, 215, 216.
+- **ACHADO GRAVE (22/09):** conferido contra produção — **nenhum** representante das equipes 92,
+  93, 95, 96 e 97 existe na tabela `representantes`. Só os 7 da equipe 94 (Jundiaí) já foram
+  importados, alguma vez. As outras 5 planilhas de `equipe-de-vendas/` nunca passaram pelo import
+  mensal. Consequência: até esse import acontecer, o Resumo da Distribuição por equipe (2.2) só
+  vai ter dado real pra 1 das 7 equipes — as outras 6 aparecem vazias mesmo com o schema pronto.
 - **Quantidade de representantes varia por equipe** — de 4 (equipe 92) a 10 (equipe 95). Não é
   fixo.
 - **A "Meta Dia (Caixas)" já existe na planilha hoje** — mas é um número fixo, repetido em todas
@@ -228,9 +240,72 @@ e trazem dado novo:
     (drill-down) dentro da equipe, para supervisor/manager, ou a visão por representante deve
     desaparecer completamente das telas?
 
-## 4. Próximos passos
+## 4. Respostas do cliente (22/09/2026) e status de cada pergunta
 
-Gráficos (item 2.1) já implementados e testados — não dependia de resposta do cliente. As 15
-perguntas da seção 3 foram enviadas ao cliente em 21/09/2026. Aguardar o retorno antes de
-desenhar o schema de `equipes` e o mecanismo de meta diária em cascata (itens 2.3 e 2.4) — são
-mudanças estruturais e uma decisão errada aqui é cara de desfazer depois.
+> **Nota de processo:** o `PENDENCIAS.md` (entrada de 21/09, parte 2) registrava que a mensagem
+> formatada ainda **não** tinha sido confirmada como enviada; mesmo assim, o cliente respondeu a
+> este bloco de 15 perguntas em 22/09/2026. Tratando como recebidas e válidas independente do
+> canal exato de envio.
+
+| # | Tema | Resposta do cliente | Status |
+|---|---|---|---|
+| 1 | Número da equipe que falta | "Não sei que arquivo vc está falando" | 🔁 pergunta mal formulada — citava jargão interno (nome de arquivo), precisa reformular |
+| 2 | Nome de região = supervisor? | "Nome da região" (não é supervisor) | ⚠️ resolvido em parte — ainda falta saber quem é o supervisor de cada equipe |
+| 3 | Representante em mais de uma equipe? | "Somente em uma equipe" | ✅ resolvido — vínculo 1:1 |
+| 4 | Número da equipe é fixo? | "Sim" | ✅ resolvido |
+| 5 | Cor escolhida ou automática? | "Sistema define" | ✅ resolvido (refinado pela resposta 13) |
+| 6 | Histórico retroagido por equipe? | "Contabiliza o histórico também" | ✅ resolvido — retroativo |
+| 7 | "Meta Dia" atual é a meta do Manager? | "Perguntar ao Alex Pai" | ⏳ encaminhada a terceiro |
+| 8 | Meta é produto-por-dia (exemplo Sheila)? | "Na verdade não se deve focar em um produto por dia" | ⚠️ resolvido em parte — descarta a hipótese de produto-por-dia, mas não diz o que a meta diária é de fato (ver pergunta 7) |
+| 9 | Meta diária substitui ou convive com metas atuais? | "Convivem" | ✅ resolvido |
+| 10 | Base ativa vs "o que está ativo" | "São números diferentes: base ativa = clientes ativos na base; o que está ativo = clientes que compraram dentro de um determinado período" | ⚠️ resolvido em parte — falta definir o período exato |
+| 11 | Resumo por equipe substitui `/distribuicao`? | "Perguntar ao Alex Pai" | ⏳ encaminhada a terceiro |
+| 12 | Recolorir rankings também? | "Sim" | ✅ resolvido |
+| 13 | Cor da equipe fixa entre gráficos? | "Cada equipe deve ter uma cor fixa" | ✅ resolvido |
+| 14 | Vendedor mantém acesso de login? | "Perguntar ao Alex Pai" | ⏳ encaminhada a terceiro |
+| 15 | Drill-down por representante ainda necessário? | "Ainda precisa" | ✅ resolvido |
+
+### 4.1 Perguntas de acompanhamento (reformuladas / novas, ainda sem resposta)
+
+a. **(substitui a pergunta 1)** Quais são os números das 7 equipes? Temos hoje 92, 93, 94, 95, 96
+   e 97 — falta um número pra fechar as 7.
+b. **(decorre da resposta 2)** Quem é o supervisor responsável por cada uma das 7 equipes?
+c. **(decorre da resposta 8, provavelmente resolve junto com a pergunta 7)** Se não é
+   produto-por-dia, o que exatamente compõe a meta diária que o Manager vai definir? É um valor
+   numérico (caixas/R$) igual ao "Meta Dia" que já existe hoje, só que agora cascateando
+   Manager → Supervisor → Vendedor?
+d. **(decorre da resposta 10)** Qual é o período que define um cliente como "ativo" (comprou
+   dentro de quanto tempo — últimos 30 dias, mês corrente, outro)?
+
+### 4.2 Perguntas encaminhadas para o Alex Pai (7, 11, 14)
+
+Ainda não está registrado em nenhum documento do projeto quem é o Alex Pai (sócio? gestor
+comercial? outro papel?). Vale confirmar com o cliente antes de enviar essas 3 perguntas
+diretamente a ele:
+- Pergunta 7: se a "Meta Dia (Caixas)" já existente na planilha é a meta que o Manager vai
+  definir daqui pra frente, ou é algo mais detalhado.
+- Pergunta 11: se o novo resumo por equipe substitui a tela `/distribuicao` atual ou é uma
+  tela/seção nova, convivendo com a atual.
+- Pergunta 14: se o vendedor deve continuar podendo logar e ver a própria página, ou perder o
+  acesso por enquanto.
+
+## 5. Próximos passos
+
+Gráficos (item 2.1) já implementados e testados — não dependia de resposta do cliente. Das 15
+perguntas originais, 8 estão totalmente resolvidas (3, 4, 5, 6, 9, 12, 13, 15), 2 parcialmente
+resolvidas mas com pendência nova (2, 10), 1 precisou ser reformulada (1) e 1 ficou sem resposta
+direta, dependente de outra (8). As perguntas 7, 11 e 14 foram encaminhadas ao Alex Pai — ainda
+não temos retorno dele.
+
+**Feito em 22/09/2026:** `supabase_migration_v2_6.sql` (schema de `equipes` +
+`representantes.equipe_id`) rodada em produção e verificada. As 6 equipes confirmadas (92-97) já
+foram gravadas com cor fixa aprovada pelo cliente (`scripts/seed_equipes_v1.mjs`) — ver tabela em
+`PENDENCIAS.md`. `representantes.equipe_id = '94'` vinculado pros 7 representantes que já existem
+no banco. Ainda falta: o número da 7ª equipe (4.1.a), os supervisores (4.1.b) e — achado novo de
+22/09 — **importar as planilhas de Campinas, Sorocaba, EQ. SP, EQ. Sul e EQ. Itape**, que nunca
+passaram pelo import mensal. Sem isso, 6 das 7 equipes ficam sem representante vinculado e sem
+histórico de vendas, mesmo com o schema e a cor prontos.
+
+**Ainda bloqueado:** o mecanismo de meta em cascata (2.3) segue sem definição do "o quê" da meta
+diária — depende da resposta do Alex Pai à pergunta 7 (e da 4.1.c). Não desenhar esse schema
+ainda.
