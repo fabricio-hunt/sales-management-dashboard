@@ -2,6 +2,65 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 21/09/2026 (parte 2) — gráficos implementados; áudio do cliente + planilhas
+> `equipe-de-vendas/` revisam as perguntas em aberto:**
+>
+> **Gráficos entregues.** Pizza (`DistributionDonut` → `DistributionBarChart`, Curva ABC de
+> Produtos) e linha/área (`TrendLineChart` → `TrendBarChart` em `/equipe` e
+> `/analitico/faturamento-dia`; `YearComparisonChart` em `/comparativo-anual`) viraram barra.
+> `CategoryBarChart` (rankings) ganhou cor por item opcional e rótulo de valor na ponta da barra
+> — corrigido no caminho um clipping real do rótulo no Ranking Financeiro (barra mais longa
+> cortava o texto na borda do card, aumentada a margem direita). Paleta
+> (`design-tokens.ts.chartPalette`) expandida de 5 para 8 cores, ordem fixa validada contra
+> daltonismo. Testado no navegador logado; `tsc`/`eslint` limpos.
+>
+> **Áudio do cliente detalhou a meta diária — e mudou o que ia ser perguntado.** Ele descreveu um
+> exemplo (Sheila, Jundiaí, vendendo "Prestígio" segunda/terça e "Xoquito" depois) que soa como um
+> plano de qual produto focar em cada dia da semana, por vendedor — bem mais granular que uma cota
+> numérica. Conferido contra as planilhas reais: **não existe essa estrutura em nenhum dado
+> atual** — a única "Meta Dia" que já existe hoje é um número fixo de caixas (ex.: representante
+> 308 = 7/dia, igual pra todo produto), já modelado em `metas.meta_dia_cx`. Ou seja, o exemplo do
+> áudio é funcionalidade nova a desenhar, não algo pra extrair de dado existente.
+>
+> **Achado nas planilhas `equipe-de-vendas/`** (fora de `dashboard/`, 6 arquivos): os números reais
+> das equipes são **92, 93, 94, 95, 96, 97** — falta um pra fechar as 7 que o cliente menciona.
+> 94 = Jundiaí (bate com o `/equipe` já em produção), 95 = EQ. SP, 96 = EQ. Sul, 97 = EQ. Itape
+> (92/93 sem rótulo de região). Quantidade de representantes por equipe varia (4 a 10) — não é
+> fixo. Esses são rótulos de região, não confirma quem é o supervisor de cada equipe.
+>
+> **Achado que precisa de confirmação do cliente, não só decisão interna:** o áudio diz "o
+> vendedor não vai ter tablet por enquanto... por ora o que ele vai ter é o supervisor" — mas o
+> sistema **já tem** login funcional pro vendedor desde a v2 (26/08), que só vê a própria página.
+> Não deu pra saber pelo áudio se isso deveria ser removido ou se continua existindo (só sem app
+> de lançamento). Virou pergunta 14 pro cliente, em vez de suposição.
+>
+> Documento completo com as 15 perguntas revisadas (a 3, que era 13, ficou mais específica com os
+> achados acima) em `08-refinamento-graficos-equipes-metas.md`. Mensagem formatada pra WhatsApp
+> montada na conversa com o Claude Code, ainda não enviada ao cliente até o fechamento desta
+> entrada.
+
+> **Atualização 21/09/2026 — feedback do cliente sobre gráficos, equipes e metas (fase de
+> refinamento):**
+>
+> Cliente pediu: (1) só gráficos de barra, coloridos, com rótulos — nada de pizza ou linha; (2)
+> Resumo da Distribuição mostrando Base Ativa (cadastro), Meta e Realizado, por equipe (reforça
+> que são **7 equipes**); (3) meta diária definida pelo Manager, cascateando para supervisores e
+> vendedores; (4) organização por **equipe** (numerada, não por nome, por causa de rotatividade),
+> cada uma com sua própria cor — inclusive no Analítico de Vendas.
+>
+> **Achado importante:** o sistema hoje **não tem o conceito de "equipe" em lugar nenhum** — nem
+> tabela, nem tipo, nem tela. A única noção de agrupamento é o campo texto livre
+> `representantes.supervisor` e a tabela `supervisor_representantes`, que é só escopo de RLS, não
+> uma entidade de negócio. Metas hoje são só por representante × fornecedor × mês, sem qualquer
+> cascata. Dois dos cinco componentes de gráfico (`DistributionDonut` — pizza, `TrendLineChart`/
+> `YearComparisonChart` — linha) violam a regra "só barra".
+>
+> Análise técnica completa gap-a-gap e a lista de perguntas em aberto para o cliente (divisão
+> exata de equipe, como a meta cascateia, se equipe substitui ou convive com o modelo atual, etc.)
+> estão em `08-refinamento-graficos-equipes-metas.md`. Nenhuma mudança de código foi feita ainda —
+> aguardando resposta do cliente para desenhar o schema de `equipes` e o mecanismo de cascata de
+> metas.
+
 > **Atualização 18/09/2026 — módulo Assistente IA adicionado; vulnerabilidade crítica do Next.js corrigida:**
 >
 > **Assistente IA (`/assistente`).** Novo módulo, irmão do Manual de Uso, com um chat (Google Gemini,
