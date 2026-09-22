@@ -2,6 +2,22 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 22/09/2026 (parte 7) — Fase 5 (última do plano): Analítico de Vendas por equipe;
+> removido seletor antigo de supervisor:**
+>
+> `analitico/vendas/page.tsx` ganhou pills de filtro por equipe (cor fixa), com uma segunda
+> fileira de drill-down pelos representantes daquela equipe quando uma é selecionada — mesma regra
+> de escopo por papel já usada em `/distribuicao` (Manager vê tudo, Supervisor só a própria
+> equipe). Tabela ganhou coluna "Equipe" ao lado de "Rep". `tsc`/`eslint` limpos.
+>
+> Também removido o seletor manual "atribuir representantes ao supervisor" de
+> `admin/usuarios` (checkboxes + `setSupervisorRepresentantes`) — ficou redundante depois da v2.7
+> (acesso do supervisor já vem da equipe). A coluna agora linka pra `/admin/equipes`.
+>
+> **As 5 fases do `plano-implementacao-equipes.md` estão todas feitas.** O que resta é cadastro
+> que o Manager resolve sozinho (7ª equipe, supervisores, corrigir 213/313) — não bloqueia mais
+> nada de código.
+
 > **Atualização 22/09/2026 (parte 6) — Fase 4: Resumo da Distribuição por equipe:**
 >
 > `supabase_migration_v2_8.sql` (**PENDENTE DE EXECUÇÃO no Supabase**) cria `vw_positivacao_equipe`

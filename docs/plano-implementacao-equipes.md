@@ -92,10 +92,20 @@ do cliente:
       de `/equipe`, não é meta financeira). "Ativo" = comprou no mês corrente.
 - [x] Ajuda contextual da tela `/distribuicao` (não existia antes).
 
-## Fase 5 — Analítico de Vendas por equipe
+## Fase 5 — Analítico de Vendas por equipe (feito em 22/09/2026)
 
-- [ ] Trocar os pills de filtro por representante por pills de equipe, com drill-down por
-      representante dentro da equipe (pergunta 15 já resolvida: sim, precisa do drill-down).
+- [x] Pills de filtro por equipe (cor fixa), com segunda fileira de drill-down pelos
+      representantes daquela equipe (pergunta 15 já dizia: sim, precisa do drill-down).
+- [x] Coluna "Equipe" na tabela de extrato, ao lado da coluna "Rep" que já existia.
+- [x] Escopo por papel (Manager vê tudo, Supervisor só a própria equipe), mesmo mecanismo de
+      `/distribuicao`.
+
+## Todas as 5 fases do plano original estão feitas
+
+O que resta são itens de dado/cadastro que o Manager resolve sozinho em `/admin/equipes` (número
+da 7ª equipe, supervisores, corrigir a equipe dos representantes 213/313) — não bloqueiam mais
+nada de código. Próximos passos possíveis, sem urgência: revisar a lista de fornecedores/produtos
+por equipe se fizer sentido depois, ou esperar uso real do Manager pra ver o que mais ele pede.
 
 ## Segue fora de escopo, sem mudança
 

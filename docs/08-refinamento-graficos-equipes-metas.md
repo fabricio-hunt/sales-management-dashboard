@@ -159,16 +159,18 @@ tipo TypeScript, nem tela. O que existe hoje:
 - Ajuste de `supervisor_representantes` e das políticas de RLS que dependem de `supervisor` para
   passarem a considerar a equipe.
 
-### 2.5 Analítico de Vendas por equipe
+### 2.5 Analítico de Vendas por equipe — ✅ implementado em 22/09/2026
 
-**Estado atual:** `src/app/(app)/analitico/vendas/page.tsx` filtra e lista exclusivamente por
-`representante_id` — os pills de filtro são um por representante (rotulados pelo ID cru), e a
-tabela de resultado tem uma coluna `Rep` com o ID do representante. Não há qualquer noção de
+**Era assim:** `src/app/(app)/analitico/vendas/page.tsx` filtrava e listava exclusivamente por
+`representante_id` — os pills de filtro eram um por representante (rotulados pelo ID cru), e a
+tabela de resultado tinha uma coluna `Rep` com o ID do representante. Não havia qualquer noção de
 equipe na tela.
 
-**O que muda:** depende diretamente de 2.4 existir primeiro (não há equipe para agrupar/filtrar
-enquanto a entidade não existir). Depois disso, trocar o filtro por pills de equipe e decidir
-(ver seção 3) se o detalhe por representante desaparece ou vira drill-down dentro da equipe.
+**Implementado:** primeira fileira de pills agora é por equipe (cor fixa da equipe no indicador),
+e escolher uma abre uma segunda fileira só com os representantes daquela equipe — resolve a
+pergunta 15 (drill-down continua necessário, decisão já tomada em 22/09). Tabela ganhou coluna
+"Equipe" (cor + número) antes da coluna "Rep", que continua existindo. Manager vê todas as
+equipes, Supervisor só a própria (mesmo mecanismo de `/distribuicao`). `tsc`/`eslint` limpos.
 
 ### 2.6 Achados nas planilhas `equipe-de-vendas/` (21/09/2026)
 

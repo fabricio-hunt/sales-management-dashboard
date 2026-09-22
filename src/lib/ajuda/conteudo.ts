@@ -62,7 +62,10 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
 
   "analitico.vendas": {
     resumo: "Detalhe linha a linha das vendas do período, para investigar um número do resumo.",
-    passos: ["Filtre até isolar o caso que quer entender.", "Use como prova quando um total não bate com o esperado."],
+    passos: [
+      "Filtre por equipe primeiro; clicando numa equipe aparece uma segunda fileira pra afunilar num representante específico dela.",
+      "Use como prova quando um total não bate com o esperado.",
+    ],
     fonte: "As mesmas vendas que alimentam todos os outros painéis.",
   },
 
