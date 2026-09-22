@@ -60,12 +60,13 @@ do cliente:
       precisar de mim nem do cliente).
 - [x] Módulo `admin.equipes` na matriz de permissões (manager-only, mesmo padrão de
       admin.usuarios/admin.permissoes — não delegável), link na Sidebar, ajuda contextual.
-- [ ] **Ainda não feito:** revisar `UsuariosClient.tsx`/`admin/usuarios` — o seletor manual
-      "atribuir representantes ao supervisor" (que escreve em `supervisor_representantes`) ficou
-      redundante agora que a equipe resolve isso. `pode_ver_representante()` mantém o OR com a
-      tabela antiga por segurança (v2.7), então nada quebra deixando como está — mas o texto de
-      ajuda de `admin.usuarios` já foi atualizado pra apontar pra Equipes como o caminho principal.
-      Decidir depois se remove esse seletor antigo ou deixa como exceção manual.
+- [x] **Feito em 22/09/2026:** removido o seletor manual "atribuir representantes ao supervisor"
+      de `UsuariosClient.tsx` (linha expansível, checkboxes, `salvarAtribuicoes`) e a server action
+      `setSupervisorRepresentantes` (`admin/usuarios/actions.ts`) — nada mais escreve em
+      `supervisor_representantes`. A coluna da tabela agora linka pra `/admin/equipes` pro
+      supervisor. `pode_ver_representante()` mantém o OR com a tabela antiga por segurança (v2.7)
+      — não é lida por nenhuma tela, só continua servindo de rede de segurança caso algum dia
+      alguém grave lá direto no banco.
 
 ## Fase 3 — Ajustes de usabilidade nas telas que já existem (feito em 22/09/2026)
 
@@ -78,13 +79,18 @@ do cliente:
       **Os outros 2 da lista original (`ComissoesClient.tsx:56`, `PermissoesClient.tsx:62`)
       continuam pendentes** — fora do escopo desta fase, não foram tocados.
 
-## Fase 4 — Resumo da Distribuição por equipe
+## Fase 4 — Resumo da Distribuição por equipe (feito em 22/09/2026)
 
-- [ ] Novo componente/tela: Base Ativa, Cadastro, Meta e Realizado por equipe, gráfico de barra
-      colorido pela cor fixa de cada equipe (pergunta 10 já resolvida — são dois números
-      diferentes; falta só o período exato de "ativo", ver `PENDENCIAS.md`).
-- [ ] Decidir (documentando a decisão, sem precisar do cliente) se substitui `/distribuicao` ou
-      convive com ela.
+- [x] `supabase_migration_v2_8.sql` — view `vw_positivacao_equipe` (clientes ativos e positivados
+      por equipe × mês, deduplicado por cliente). **Pendente de execução no Supabase.**
+- [x] Nova seção no topo de `/distribuicao`: 4 mini-gráficos de barra (Base Ativa, Clientes Ativos,
+      Meta, Realizado), cada um com uma barra por equipe na cor fixa dela. Manager vê todas as
+      equipes, Supervisor só a própria.
+- [x] Decidido (sem cliente, documentado): **convive** com a tabela por fornecedor que já existia
+      — vira seção nova na mesma tela, não substitui nem cria rota separada.
+- [x] Decidido: "Meta"/"Realizado" = Obj. Positivação / positivação realizada (mesmo par do card
+      de `/equipe`, não é meta financeira). "Ativo" = comprou no mês corrente.
+- [x] Ajuda contextual da tela `/distribuicao` (não existia antes).
 
 ## Fase 5 — Analítico de Vendas por equipe
 

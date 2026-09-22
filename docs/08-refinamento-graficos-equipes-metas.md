@@ -88,9 +88,28 @@ Dois pontos relevantes que esse áudio muda em relação à leitura inicial do f
 por item deve se estender também aos rankings hoje monocromáticos (cliente/vendedor individual),
 e como a cor de cada equipe deve amarrar entre gráficos diferentes quando `equipes` existir.
 
-### 2.2 Resumo da Distribuição → cadastro / ativo / meta / realizado, por equipe
+### 2.2 Resumo da Distribuição → cadastro / ativo / meta / realizado, por equipe — ✅ implementado em 22/09/2026
 
-**Estado atual:** existem hoje **duas** telas diferentes, nenhuma das duas é isso:
+**Decisões tomadas sem resposta do cliente** (ele está difícil de acessar — ver
+`plano-implementacao-equipes.md`), documentadas pra revisitar se ele confirmar diferente depois:
+- **Fica dentro da tela `/distribuicao` existente**, como uma seção nova no topo — não virou rota
+  separada. O cliente chamou o pedido de "Resumo da Distribuição", mesmo nome já usado pela tela.
+  Resolve a pergunta 11 (substitui ou convive) na prática: convive, a tabela por fornecedor que já
+  existia continua embaixo, sem mudança.
+- **"Meta"/"Realizado" = Obj. Positivação / positivação realizada** — mesmo par que o card
+  "Positivação de Clientes" de `/equipe` já usa, só agregado por equipe em vez de por
+  representante/escopo selecionado. Não é meta financeira.
+- **"O que está ativo" = clientes com pelo menos 1 venda no mês corrente** (view nova,
+  `vw_positivacao_equipe`) — período assumido como "mês corrente" (mesmo filtro `MesFilter` usado
+  em todo o resto do sistema), pergunta 10 original não tinha esse detalhe confirmado.
+
+Implementado: 4 mini-gráficos de barra (`DistributionBarChart`, já usava cor por item), cada barra
+colorida com a cor fixa da equipe (pergunta 13 — mesma cor em qualquer gráfico). Manager vê todas
+as equipes, Supervisor só a própria (mesmo mecanismo de escopo de `/equipe`). `tsc`/`eslint`
+limpos.
+
+**Estado anterior** (contexto de por que precisava de tela nova — segue válido como histórico):
+existiam **duas** telas diferentes, nenhuma das duas era isso:
 
 - `/distribuicao` (`src/app/(app)/distribuicao/page.tsx`) — tabela pivô: linhas = representante,
   colunas = fornecedor, célula = clientes positivados distintos, sem gráfico e sem os campos
@@ -216,11 +235,11 @@ e trazem dado novo:
    representante × fornecedor (`meta_cx`/`meta_fin`) ou **convive** com elas?
 
 ### Resumo da Distribuição
-10. "Base ativa (cadastro)" e "o que está ativo" são dois números diferentes — equivalentes ao
-    `cadastro_total_override`/`base_ativa_override` que já existem no sistema — ou é um indicador
-    novo, diferente do que já é calculado hoje?
-11. Esse novo resumo por equipe **substitui** a tela `/distribuicao` atual (pivô por fornecedor)
-    ou é uma tela/seção nova, e a atual continua existindo com outro propósito?
+10. ✅ Respondida (22/09): são dois números diferentes — base ativa é cadastro,
+    "ativo" é quem comprou num período. Período assumido como "mês corrente" por decisão própria
+    (não confirmada) — ver 2.2.
+11. ✅ Decidido por conta própria (22/09, cliente difícil de acessar): convive — vira seção nova no
+    topo de `/distribuicao`, a tabela por fornecedor continua embaixo sem mudança. Ver 2.2.
 
 ### Gráficos
 12. A conversão de pizza (Curva ABC de Produtos) e linha (faturamento diário, comparativo anual)

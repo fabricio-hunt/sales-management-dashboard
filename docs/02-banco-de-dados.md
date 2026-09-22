@@ -55,10 +55,16 @@ Um registro por item de pedido faturado.
 Tudo que a planilha calculava via pivot manual (positivação, distribuição, financeiro por fornecedor) vira uma
 `VIEW` sobre `vendas`, consultada ao vivo pelas telas:
 
-- `vw_realizado_rep_fornecedor`, `vw_realizado_equipe_fornecedor`
+- `vw_realizado_rep_fornecedor`, `vw_realizado_equipe_fornecedor` (esta última é nome legado — soma a
+  empresa inteira, de quando só existia uma equipe; não é a entidade `equipes` nova, ver
+  `vw_positivacao_equipe` abaixo)
 - `vw_faturamento_diario`
 - `vw_positivacao_representante`, `vw_financeiro_representante`
 - `vw_vendas_cliente_dia`
+- `vw_positivacao_equipe` (`supabase_migration_v2_8.sql`, 22/09/2026): por `equipe_id` × mês,
+  clientes distintos que compraram (`clientes_ativos`) e clientes distintos positivados
+  (`positivados`) — `COUNT DISTINCT` direto na fato, pra não contar duas vezes quem comprou de mais
+  de um representante da mesma equipe. Alimenta o Resumo da Distribuição por equipe.
 
 Ver `supabase_migration_v1.sql` (raiz do projeto) pra o DDL completo — inclui também as funções
 `apagar_vendas_periodo` e `atribuir_representante_se_vazio` usadas pelo import (ver `03-importacao-excel.md`).

@@ -118,8 +118,16 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
   },
 
   distribuicao: {
-    resumo: "Cobertura por fornecedor: onde a distribuição está furada.",
-    passos: ["Procure fornecedor com desafio de distribuição cadastrado e execução abaixo."],
+    resumo: "Quatro números por equipe (Base Ativa, Clientes Ativos, Meta e Realizado) e, embaixo, a cobertura por fornecedor (onde a distribuição está furada).",
+    passos: [
+      "Cada barra usa a cor fixa da equipe — a mesma em qualquer outro gráfico do sistema.",
+      "Manager vê todas as equipes; Supervisor só vê a própria.",
+      "Na tabela por fornecedor, procure desafio de distribuição cadastrado com execução abaixo.",
+    ],
+    fonte:
+      "Base Ativa é cadastro (clientes.status='ativo'). Clientes Ativos é quem comprou no mês, calculado ao vivo de vendas. Meta/Realizado é o Obj. Positivação somado por equipe contra a positivação real, sem contar duas vezes um cliente que comprou de mais de um representante da mesma equipe.",
+    atencao:
+      "Equipe sem representante vinculado (ver Equipes) não aparece aqui — os quatro números ficam em zero até alguém ser atribuído a ela.",
   },
 
   evolucao: {

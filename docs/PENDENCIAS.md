@@ -2,6 +2,23 @@
 
 Documento criado para registrar todos os pontos abertos antes de continuar o desenvolvimento.
 
+> **Atualização 22/09/2026 (parte 6) — Fase 4: Resumo da Distribuição por equipe:**
+>
+> `supabase_migration_v2_8.sql` (**PENDENTE DE EXECUÇÃO no Supabase**) cria `vw_positivacao_equipe`
+> (clientes ativos e positivados por equipe × mês, `COUNT DISTINCT` pra não contar duas vezes quem
+> comprou de mais de um representante da mesma equipe). `/distribuicao` ganhou uma seção nova no
+> topo com 4 gráficos de barra (Base Ativa, Clientes Ativos, Meta, Realizado), cada um com uma
+> barra por equipe na cor fixa dela — a tabela por fornecedor que já existia continua embaixo, sem
+> mudança nenhuma.
+>
+> **Decisões tomadas sem o cliente (documentadas em `08-refinamento-...md` e
+> `plano-implementacao-equipes.md`, pra revisitar se ele confirmar diferente):** resumo por equipe
+> **convive** com a tabela por fornecedor (não substitui, pergunta 11); "Meta"/"Realizado" =
+> Obj. Positivação / positivação realizada, não meta financeira; "o que está ativo" = comprou no
+> **mês corrente** (período não estava confirmado, pergunta 10). `tsc`/`eslint` limpos.
+>
+> **Pendente pra retomar:** rodar a migration v2.8 em produção.
+
 > **Atualização 22/09/2026 (parte 5) — decisão de tocar o projeto sem depender de validação do
 > cliente; Fase 1 e 2 do plano de equipes:**
 >
