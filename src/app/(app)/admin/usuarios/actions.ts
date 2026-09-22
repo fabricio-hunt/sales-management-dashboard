@@ -146,17 +146,3 @@ export async function deleteUsuario(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/admin/usuarios");
 }
-
-export async function setSupervisorRepresentantes(supervisorId: string, representanteIds: string[]) {
-  await requireRole(["manager"]);
-  const { error: delError } = await supabaseAdmin.from("supervisor_representantes").delete().eq("supervisor_id", supervisorId);
-  if (delError) throw new Error(delError.message);
-
-  if (representanteIds.length > 0) {
-    const { error: insError } = await supabaseAdmin
-      .from("supervisor_representantes")
-      .insert(representanteIds.map((representante_id) => ({ supervisor_id: supervisorId, representante_id })));
-    if (insError) throw new Error(insError.message);
-  }
-  revalidatePath("/admin/usuarios");
-}

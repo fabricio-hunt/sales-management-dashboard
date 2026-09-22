@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { createBrowserSupabase } from "@/lib/supabase/client"
-import { createUsuario, updateUsuario, deleteUsuario, resetarSenha, setSupervisorRepresentantes, listarUsuarios } from "./actions"
+import { createUsuario, updateUsuario, deleteUsuario, resetarSenha, listarUsuarios } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Plus, Trash2, Save, ChevronDown, ChevronUp, KeyRound } from "lucide-react"
+import { Plus, Trash2, Save, KeyRound, UsersRound } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RepresentanteSelect } from "@/components/forms/RepresentanteSelect"
 import { Alert } from "@/components/ui/alert"
@@ -27,28 +28,20 @@ export default function UsuariosAdminPage() {
   const supabase = useMemo(() => createBrowserSupabase(), [])
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [representantes, setRepresentantes] = useState<Representante[]>([])
-  const [atribuicoes, setAtribuicoes] = useState<Record<string, string[]>>({}) // supervisor_id -> representante_id[]
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [criando, setCriando] = useState(false)
-  const [expandido, setExpandido] = useState<string | null>(null)
   const [resetando, setResetando] = useState<string | null>(null)
   const [novaSenha, setNovaSenha] = useState("")
   const [salvandoReset, setSalvandoReset] = useState(false)
 
   async function load() {
-    const [users, { data: reps }, { data: sup }] = await Promise.all([
+    const [users, { data: reps }] = await Promise.all([
       listarUsuarios(),
       supabase.from("representantes").select("id, nome, equipe_id").order("id"),
-      supabase.from("supervisor_representantes").select("supervisor_id, representante_id"),
     ])
     setUsuarios(users || [])
     setRepresentantes(reps || [])
-    const map: Record<string, string[]> = {}
-    for (const row of sup || []) {
-      map[row.supervisor_id] = [...(map[row.supervisor_id] ?? []), row.representante_id]
-    }
-    setAtribuicoes(map)
     setLoading(false)
   }
 
@@ -130,23 +123,6 @@ export default function UsuariosAdminPage() {
       toast.error("Erro: " + (err instanceof Error ? err.message : String(err)))
     } finally {
       setSalvandoReset(false)
-    }
-  }
-
-  const toggleRepresentante = (supervisorId: string, repId: string) => {
-    setAtribuicoes((prev) => {
-      const atuais = prev[supervisorId] ?? []
-      const novo = atuais.includes(repId) ? atuais.filter((r) => r !== repId) : [...atuais, repId]
-      return { ...prev, [supervisorId]: novo }
-    })
-  }
-
-  const salvarAtribuicoes = async (supervisorId: string) => {
-    try {
-      await setSupervisorRepresentantes(supervisorId, atribuicoes[supervisorId] ?? [])
-      toast.success("Representantes atribuídos!")
-    } catch (err) {
-      toast.error("Erro: " + (err instanceof Error ? err.message : String(err)))
     }
   }
 
@@ -273,13 +249,13 @@ export default function UsuariosAdminPage() {
                           className="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
                         />
                       ) : u.role === "supervisor" ? (
-                        <button
-                          onClick={() => setExpandido(expandido === u.id ? null : u.id)}
+                        <Link
+                          href="/admin/equipes"
                           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          title="A equipe do supervisor é atribuída em Equipes, não aqui"
                         >
-                          {(atribuicoes[u.id] ?? []).length} representante(s)
-                          {expandido === u.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
+                          <UsersRound className="w-3 h-3" /> Ver em Equipes
+                        </Link>
                       ) : (
                         <span className="text-muted-foreground text-xs">-</span>
                       )}
@@ -318,27 +294,6 @@ export default function UsuariosAdminPage() {
                             Anote e entregue à pessoa: ela vai precisar dessa senha uma vez e trocará por outra no
                             primeiro acesso.
                           </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {u.role === "supervisor" && expandido === u.id && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="bg-muted/30">
-                        <div className="p-3 space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground">Representantes que este supervisor pode ver:</p>
-                          <div className="flex flex-wrap gap-3">
-                            {representantes.map((r) => (
-                              <label key={r.id} className="flex items-center gap-1.5 text-xs">
-                                <Checkbox
-                                  checked={(atribuicoes[u.id] ?? []).includes(r.id)}
-                                  onCheckedChange={() => toggleRepresentante(u.id, r.id)}
-                                />
-                                {r.id} — {r.nome}
-                              </label>
-                            ))}
-                          </div>
-                          <Button size="sm" onClick={() => salvarAtribuicoes(u.id)}><Save className="w-3.5 h-3.5 mr-1" /> Salvar atribuições</Button>
                         </div>
                       </TableCell>
                     </TableRow>
