@@ -191,15 +191,26 @@ export const AJUDA: Record<string, AjudaModuloConteudo> = {
   },
 
   "admin.usuarios": {
-    resumo: "Quem tem login, com que papel, e quais representantes cada supervisor acompanha.",
+    resumo: "Quem tem login, com que papel, e a qual equipe cada supervisor pertence.",
     passos: [
       "Ao criar, defina uma senha inicial e passe para a pessoa: ela será obrigada a trocar no primeiro acesso.",
       "Para entrar com Google, o e-mail da conta Google precisa ser idêntico ao e-mail cadastrado aqui — não há autocadastro por esse caminho.",
-      "Para um supervisor, expanda a linha, marque os representantes e clique em Salvar atribuições.",
+      "Depois de criar um supervisor, vá em Equipes para vincular ele à equipe dele — é isso que define o que ele enxerga.",
       "O ícone de chave redefine a senha de quem perdeu o acesso.",
     ],
     atencao:
-      "Supervisor sem representantes atribuídos enxerga zero em todas as telas de equipe. Não existe recuperação de senha por e-mail: redefinir aqui é o único caminho pra quem entra com e-mail/senha (quem usa Google não depende disso).",
+      "Supervisor sem equipe vinculada (em Equipes) enxerga zero em todas as telas. Não existe recuperação de senha por e-mail: redefinir aqui é o único caminho pra quem entra com e-mail/senha (quem usa Google não depende disso).",
+  },
+
+  "admin.equipes": {
+    resumo: "Cada equipe tem um supervisor e um grupo de representantes — é isso que decide o que o supervisor enxerga no sistema.",
+    passos: [
+      "Crie a equipe pelo número (o mesmo já usado no ERP/planilhas) — a cor é escolhida automaticamente e não muda depois.",
+      "Vincule o supervisor na tabela de equipes: um supervisor só pode estar em uma equipe por vez.",
+      "Use a tabela de representantes, no fim da página, pra mover alguém de equipe quando precisar corrigir.",
+    ],
+    atencao:
+      "Representante sem equipe some das telas agrupadas por equipe (mas continua contando normalmente nas telas por representante). Trocar a equipe de um representante já com histórico de vendas reclassifica esse histórico inteiro pra nova equipe — não é possível \"deixar o passado\" na equipe antiga.",
   },
 
   "admin.permissoes": {
