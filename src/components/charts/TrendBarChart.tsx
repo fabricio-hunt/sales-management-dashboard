@@ -1,21 +1,24 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { tokens } from "@/lib/design-tokens";
 import { formatValue, type ValueFormat } from "@/lib/format-value";
 
 interface TrendBarChartProps {
-  data: { label: string; value: number }[];
+  // `color` por item é opcional — quando ausente, cicla pela paleta de gráficos
+  // (mesmo padrão de CategoryBarChart/DistributionBarChart). Pedido do cliente:
+  // nada de cor uniforme, e o valor precisa aparecer sem precisar passar o mouse.
+  data: { label: string; value: number; color?: string }[];
   format?: ValueFormat;
   color?: string;
 }
 
-export function TrendBarChart({ data, format = "number", color = tokens.colors.accent }: TrendBarChartProps) {
+export function TrendBarChart({ data, format = "number", color }: TrendBarChartProps) {
   const fmt = (v: number) => formatValue(v, format);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke={tokens.colors.border} />
         <XAxis
           dataKey="label"
@@ -43,7 +46,18 @@ export function TrendBarChart({ data, format = "number", color = tokens.colors.a
           }}
           cursor={{ fill: tokens.colors.background }}
         />
-        <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} maxBarSize={18} />
+        <Bar dataKey="value" radius={[3, 3, 0, 0]} maxBarSize={18}>
+          {data.map((entry, i) => (
+            <Cell key={entry.label} fill={entry.color ?? color ?? tokens.colors.chartPalette[i % tokens.colors.chartPalette.length]} />
+          ))}
+          <LabelList
+            dataKey="value"
+            position="top"
+            formatter={(v) => fmt(Number(v))}
+            fontSize={9}
+            fill={tokens.colors.textSecondary}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
